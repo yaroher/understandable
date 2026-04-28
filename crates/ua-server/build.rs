@@ -29,10 +29,20 @@ fn main() {
         return;
     }
 
-    if try_build(&dashboard_dir, "pnpm", &["install", "--frozen-lockfile"], &["build"]) {
+    if try_build(
+        &dashboard_dir,
+        "pnpm",
+        &["install", "--frozen-lockfile"],
+        &["build"],
+    ) {
         return;
     }
-    if try_build(&dashboard_dir, "npm", &["install", "--legacy-peer-deps"], &["run", "build"]) {
+    if try_build(
+        &dashboard_dir,
+        "npm",
+        &["install", "--legacy-peer-deps"],
+        &["run", "build"],
+    ) {
         return;
     }
 
