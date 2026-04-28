@@ -1,8 +1,11 @@
 # understandable
 
+[![Docs](https://img.shields.io/badge/docs-yaroher.github.io%2Funderstandable-blue)](https://yaroher.github.io/understandable/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://github.com/yaroher/understandable/tree/main/.claude-plugin)
 [![GitHub Releases](https://img.shields.io/github/v/release/yaroher/understandable)](https://github.com/yaroher/understandable/releases/latest)
+
+📖 **Documentation**: <https://yaroher.github.io/understandable/> (English + Русский)
 
 Codebase comprehension as a single Rust binary. Turns any source repo
 into an interactive knowledge graph plus a guided tour, served from a
