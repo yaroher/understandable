@@ -1,0 +1,21 @@
+{
+  "name": "understandable",
+  "description": "Rust-native codebase understanding — analyze, visualize, and explain any project",
+  "version": "0.1.0",
+  "author": {
+    "name": "yaroher"
+  },
+  "homepage": "https://github.com/yaroher/understandable",
+  "repository": "https://github.com/yaroher/understandable",
+  "license": "MIT",
+  "keywords": [
+    "codebase-analysis",
+    "knowledge-graph",
+    "architecture",
+    "onboarding",
+    "dashboard",
+    "rust"
+  ],
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

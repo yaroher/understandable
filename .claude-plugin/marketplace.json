@@ -1,0 +1,15 @@
+{
+  "name": "understandable",
+  "metadata": {
+    "description": "Rust-native codebase understanding — turso-backed knowledge graphs, guided tours, and deep-dive explanations."
+  },
+  "owner": {
+    "name": "yaroher"
+  },
+  "plugins": [
+    {
+      "name": "understandable",
+      "source": "."
+    }
+  ]
+}

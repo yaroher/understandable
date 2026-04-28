@@ -1,0 +1,122 @@
+/* understandable — Cool Dark Theme (blue/teal accents) */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800;900&display=swap');
+
+:root,
+[data-theme='dark'] {
+  /* Core palette */
+  --ifm-background-color: #0a0e14;
+  --ifm-background-surface-color: #0f141b;
+  --ifm-color-primary: #4fb8e0;
+  --ifm-color-primary-dark: #36a8d4;
+  --ifm-color-primary-darker: #2c9bc6;
+  --ifm-color-primary-darkest: #1f7da3;
+  --ifm-color-primary-light: #6ec5e8;
+  --ifm-color-primary-lighter: #8dd3ee;
+  --ifm-color-primary-lightest: #b3e2f4;
+
+  /* Text */
+  --ifm-font-color-base: #d8e0e8;
+  --ifm-font-color-secondary: #7a8694;
+  --ifm-heading-color: #fff;
+
+  /* Links */
+  --ifm-link-color: #4fb8e0;
+  --ifm-link-hover-color: #8dd3ee;
+
+  /* Code */
+  --ifm-code-background: #0f141b;
+  --ifm-code-font-size: 90%;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #0a0e14;
+  --ifm-navbar-shadow: 0 1px 0 rgba(79, 184, 224, 0.12);
+
+  /* Footer */
+  --ifm-footer-background-color: #05080c;
+
+  /* Borders */
+  --ifm-toc-border-color: #1a212b;
+  --ifm-hr-border-color: #1a212b;
+
+  /* Sidebar */
+  --doc-sidebar-width: 280px;
+
+  /* Typography */
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', monospace;
+  --ifm-heading-font-family: 'JetBrains Mono', monospace;
+  --ifm-heading-font-weight: 700;
+}
+
+/* Light theme overrides (subdued, still keeps brand) */
+[data-theme='light'] {
+  --ifm-background-color: #fafbfc;
+  --ifm-background-surface-color: #fff;
+  --ifm-color-primary: #1f7da3;
+  --ifm-color-primary-dark: #186786;
+  --ifm-color-primary-darker: #145a76;
+  --ifm-color-primary-darkest: #0e445a;
+  --ifm-color-primary-light: #2c9bc6;
+  --ifm-color-primary-lighter: #36a8d4;
+  --ifm-color-primary-lightest: #4fb8e0;
+  --ifm-font-color-base: #1a212b;
+  --ifm-heading-color: #0a0e14;
+  --ifm-navbar-background-color: #fff;
+  --ifm-footer-background-color: #f1f4f7;
+}
+
+/* Navbar branding */
+.navbar__title {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: lowercase;
+  font-size: 17px;
+}
+
+/* Sidebar */
+.menu__link {
+  font-size: 14px;
+}
+.menu__link--active:not(.menu__link--sublist) {
+  border-left: 2px solid var(--ifm-color-primary);
+  padding-left: 10px;
+}
+
+/* Code blocks */
+.prism-code {
+  background: #0f141b !important;
+  border: 1px solid #1a212b;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+}
+table th {
+  background: #0f141b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+table td, table th {
+  border-color: #1a212b;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2a35;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ifm-color-primary);
+}

@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if printf '%s' \"$TOOL_INPUT\" | grep -qE 'git\\s+(commit|merge|cherry-pick|rebase)' && [ -f .understandable/config.json ] && grep -q '\"autoUpdate\".*true' .understandable/config.json; then understandable staleness --quiet; case $? in 1) echo \"[understandable] Knowledge graph is stale (commit hash drift). You MUST read the file at ${CLAUDE_PLUGIN_ROOT}/hooks/auto-update-prompt.md and execute its instructions to incrementally update the graph. Do not ask the user for confirmation — just do it.\" ;; *) : ;; esac; fi"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .understandable/config.json ] && grep -q '\"autoUpdate\".*true' .understandable/config.json; then understandable staleness --quiet; case $? in 1) echo \"[understandable] Knowledge graph is stale relative to HEAD. You MUST read the file at ${CLAUDE_PLUGIN_ROOT}/hooks/auto-update-prompt.md and execute its instructions to update the graph. Do not ask the user for confirmation — just do it.\" ;; *) : ;; esac; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

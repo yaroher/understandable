@@ -1,0 +1,57 @@
+[package]
+name = "understandable"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Rust-native codebase understanding CLI — analyze, visualise, and explain any project."
+default-run = "understandable"
+
+[[bin]]
+name = "understandable"
+path = "src/main.rs"
+
+# ---------------------------------------------------------------------------
+# cargo-binstall metadata
+# ---------------------------------------------------------------------------
+# `cargo binstall understandable` resolves these placeholders to a release
+# asset URL produced by .github/workflows/release.yml. Layout mirrors the
+# staged archives: understandable-<target>.tar.gz containing
+# understandable-<target>/<bin>{binary-ext}.
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/understandable-{ target }.{ archive-format }"
+bin-dir = "understandable-{ target }/{ bin }{ binary-ext }"
+pkg-fmt = "tgz"
+
+[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-fmt = "zip"
+
+[features]
+# Mirror upstream feature surfaces so end users can opt in via
+# `cargo install --features ...`.
+default = []
+all-langs        = ["ua-extract/all-langs"]
+tier2            = ["ua-extract/tier2"]
+local-embeddings = ["ua-llm/local-embeddings"]
+
+[dependencies]
+ua-core     = { workspace = true }
+ua-extract  = { workspace = true }
+ua-analyzer = { workspace = true }
+ua-persist  = { workspace = true }
+ua-search   = { workspace = true }
+ua-server   = { workspace = true }
+ua-llm      = { workspace = true }
+clap        = { workspace = true }
+tokio       = { workspace = true }
+anyhow      = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+tracing     = { workspace = true }
+tracing-subscriber = { workspace = true }
+url         = "2"

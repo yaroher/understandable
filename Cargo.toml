@@ -1,0 +1,159 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ua-core",
+    "crates/ua-extract",
+    "crates/ua-analyzer",
+    "crates/ua-search",
+    "crates/ua-persist",
+    "crates/ua-llm",
+    "crates/ua-server",
+    "crates/ua-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.83"
+license = "MIT"
+repository = "https://github.com/yaroher/understandable"
+homepage = "https://github.com/yaroher/understandable"
+documentation = "https://docs.rs/understandable"
+authors = ["yaroher <yaroher2442@gmail.com>"]
+keywords = ["codebase", "knowledge-graph", "tree-sitter", "dashboard", "tour"]
+categories = ["development-tools", "command-line-utilities", "visualization"]
+readme = "README.md"
+
+[workspace.dependencies]
+# internal
+ua-core      = { path = "crates/ua-core" }
+ua-extract   = { path = "crates/ua-extract" }
+ua-analyzer  = { path = "crates/ua-analyzer" }
+ua-search    = { path = "crates/ua-search" }
+ua-persist   = { path = "crates/ua-persist" }
+ua-llm       = { path = "crates/ua-llm" }
+ua-server    = { path = "crates/ua-server" }
+
+# core
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+serde_yaml_ng = "0.10"
+toml         = "0.8"
+thiserror    = "1"
+anyhow       = "1"
+tracing      = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# async + cli
+tokio        = { version = "1", features = ["full"] }
+clap         = { version = "4", features = ["derive", "env"] }
+
+# storage
+indradb-lib  = "5.0.0"
+usearch      = "2.25.1"
+tar          = "0.4"
+bincode      = "1"
+uuid         = { version = "1", features = ["v5", "v4", "serde"] }
+rmp-serde    = "1"
+bytemuck     = "1"
+zstd         = "0.13"
+blake3       = "1"
+ignore       = "0.4"
+tempfile     = "3"
+
+# graph + search
+petgraph     = "0.6"
+nucleo-matcher = "0.3"
+
+# http
+axum         = "0.7"
+tower-http   = { version = "0.5", features = ["fs", "cors", "trace"] }
+reqwest      = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+rust-embed   = { version = "8", features = ["debug-embed"] }
+
+# embeddings (optional; local-onnx feature in ua-llm)
+fastembed    = { version = "5", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries-rustls-tls"] }
+
+# tree-sitter (sized via feature flags in ua-extract)
+tree-sitter             = "0.26"
+# tier-1
+tree-sitter-typescript  = "0.23"
+tree-sitter-javascript  = "0.25"
+tree-sitter-python      = "0.25"
+tree-sitter-go          = "0.25"
+tree-sitter-rust        = "0.24"
+tree-sitter-java        = "0.23"
+tree-sitter-ruby        = "0.23"
+tree-sitter-php         = "0.24"
+tree-sitter-c           = "0.24"
+tree-sitter-cpp         = "0.23"
+tree-sitter-c-sharp     = "0.23"
+# tier-2 — broad coverage of crates.io grammars
+tree-sitter-bash        = "0.25"
+tree-sitter-html        = "0.23"
+tree-sitter-css         = "0.25"
+tree-sitter-json        = "0.24"
+tree-sitter-yaml        = "0.7"
+tree-sitter-toml        = "0.20"
+tree-sitter-xml         = "0.7"
+tree-sitter-markdown    = "0.7"
+tree-sitter-haskell     = "0.23"
+tree-sitter-ocaml       = "0.24"
+tree-sitter-erlang      = "0.16"
+tree-sitter-elixir      = "0.3"
+tree-sitter-elm         = "5.9"
+tree-sitter-scheme      = "0.24"
+tree-sitter-julia       = "0.23"
+tree-sitter-lua         = "0.5"
+tree-sitter-zig         = "1.1"
+tree-sitter-dart        = "0.2"
+tree-sitter-swift       = "0.7"
+tree-sitter-scala       = "0.26"
+tree-sitter-groovy      = "0.1"
+tree-sitter-perl        = "1.1"
+tree-sitter-fish        = "3.6"
+tree-sitter-cmake       = "0.7"
+tree-sitter-nix         = "0.3"
+tree-sitter-vim         = "0.4"
+tree-sitter-regex       = "0.25"
+tree-sitter-solidity    = "1.2"
+tree-sitter-hcl         = "1.1"
+tree-sitter-cuda        = "0.21"
+tree-sitter-glsl        = "0.2"
+tree-sitter-hlsl        = "0.2"
+tree-sitter-verilog     = "1"
+tree-sitter-vhdl        = "1"
+tree-sitter-objc        = "3"
+tree-sitter-fortran     = "0.6"
+tree-sitter-d           = "0.8"
+tree-sitter-fsharp      = "0.3"
+tree-sitter-jq          = "1"
+tree-sitter-ini         = "1"
+tree-sitter-make        = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 1
+
+# ---------------------------------------------------------------------------
+# cargo-binstall workspace defaults
+# ---------------------------------------------------------------------------
+# These are inherited by member crates that don't override them. The binary
+# package (`understandable` in crates/ua-cli) supplies the per-crate overrides
+# that point at the GitHub Release artifacts produced by .github/workflows/release.yml.
+# Layout matches the staged archives: understandable-<target>/<bin>{.exe}
+[workspace.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/understandable-{ target }.{ archive-format }"
+bin-dir = "understandable-{ target }/{ bin }{ binary-ext }"
+pkg-fmt = "tgz"
+
+[workspace.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-fmt = "zip"

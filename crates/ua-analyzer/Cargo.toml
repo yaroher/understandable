@@ -1,0 +1,23 @@
+[package]
+name = "ua-analyzer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Graph builder, layer detection, tour generation, normalization, domain + knowledge."
+
+[dependencies]
+ua-core    = { workspace = true }
+ua-extract = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+petgraph   = { workspace = true }
+ignore     = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

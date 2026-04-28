@@ -1,0 +1,38 @@
+{
+  "link.title.Docs": {
+    "message": "Документация",
+    "description": "The title of the footer links column with title=Docs"
+  },
+  "link.title.Community": {
+    "message": "Сообщество",
+    "description": "The title of the footer links column with title=Community"
+  },
+  "link.item.label.Introduction": {
+    "message": "Введение",
+    "description": "Footer link item label"
+  },
+  "link.item.label.Getting Started": {
+    "message": "Начало работы",
+    "description": "Footer link item label"
+  },
+  "link.item.label.CLI Reference": {
+    "message": "Справочник CLI",
+    "description": "Footer link item label"
+  },
+  "link.item.label.Architecture": {
+    "message": "Архитектура",
+    "description": "Footer link item label"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Footer link item label"
+  },
+  "link.item.label.Issues": {
+    "message": "Issues",
+    "description": "Footer link item label"
+  },
+  "copyright": {
+    "message": "Copyright © 2026 understandable",
+    "description": "The footer copyright"
+  }
+}

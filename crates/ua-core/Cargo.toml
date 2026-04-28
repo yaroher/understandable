@@ -1,0 +1,18 @@
+[package]
+name = "ua-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Core types, schema, and validation for the understandable knowledge graph."
+
+[dependencies]
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+serde_yaml_ng = { workspace = true }
+thiserror   = { workspace = true }
+
+[dev-dependencies]
+serde_json  = { workspace = true }

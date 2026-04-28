@@ -1,0 +1,66 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# TS reference upstream — kept as local reference, not committed
+/Understand-Anything/
+
+# Project-local cache (graph archive, intermediate, tmp).
+# `understandable init` manages this block via gitignore.rs;
+# explicit entry here covers the case where init was never run.
+.understandable/
+
+# Node / pnpm / vite / docusaurus build outputs
+node_modules/
+**/node_modules/
+dashboard/dist/
+website/build/
+website/.docusaurus/
+website/.cache/
+
+# Per-user IDE state (project-wide IDE configs ARE tracked).
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+.idea/shelf/
+.vscode/settings.json
+.vscode/.ropeproject/
+
+# Editor / OS noise
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets / env — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+.aws-credentials
+.netrc
+
+# Coverage / test artifacts
+*.profraw
+tarpaulin-report.html
+tarpaulin-report.json
+lcov.info
+/coverage/
+
+# Misc
+*.log
+*.bak
+*.orig
+*.rej
+
+# Stale `understandable` tar.zst cache (graph archives live under .understandable/
+# which is already covered above; this guards against legacy .db.zst stragglers).
+*.db
+*.db.zst

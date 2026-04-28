@@ -1,0 +1,62 @@
+{
+  "home.hero.badge": {
+    "message": "early access",
+    "description": "Hero badge above the title"
+  },
+  "home.hero.tagline": {
+    "message": "Rust-native codebase understanding. Analyze, visualise, and explain any project — from a single crate to a multi-language monorepo.",
+    "description": "Hero tagline below the title"
+  },
+  "home.cta.primary": {
+    "message": "Get Started",
+    "description": "Primary CTA button in hero"
+  },
+  "home.cta.github": {
+    "message": "GitHub",
+    "description": "Secondary CTA button to GitHub"
+  },
+  "home.features.title": {
+    "message": "// What it does",
+    "description": "Section heading above feature cards"
+  },
+  "home.feature.analyze.title": {
+    "message": "Analyze",
+    "description": "Landing feature card title"
+  },
+  "home.feature.analyze.desc": {
+    "message": "Parse Rust, Go, Python, TypeScript and more. Build call graphs, module trees, and dependency edges with tree-sitter precision.",
+    "description": "Landing feature card description"
+  },
+  "home.feature.visualise.title": {
+    "message": "Visualise",
+    "description": "Landing feature card title"
+  },
+  "home.feature.visualise.desc": {
+    "message": "Interactive dashboard renders code graphs, hot paths, and architectural layers. Zoom from package to function in one click.",
+    "description": "Landing feature card description"
+  },
+  "home.feature.explain.title": {
+    "message": "Explain",
+    "description": "Landing feature card title"
+  },
+  "home.feature.explain.desc": {
+    "message": "Embed code chunks, query semantically, and get AI-grounded explanations of how any subsystem actually works.",
+    "description": "Landing feature card description"
+  },
+  "home.cta.section.title": {
+    "message": "READ THE GRAPH",
+    "description": "Bottom CTA section heading"
+  },
+  "home.cta.section.text": {
+    "message": "Stop guessing. Start understanding the codebase you actually have.",
+    "description": "Bottom CTA section text"
+  },
+  "home.cta.section.button": {
+    "message": "Read the Docs",
+    "description": "Bottom CTA section button"
+  },
+  "home.meta.description": {
+    "message": "Rust-native codebase understanding tool. Analyze, visualise, explain any project.",
+    "description": "Landing page meta description"
+  }
+}

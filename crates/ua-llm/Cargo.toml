@@ -1,0 +1,31 @@
+[package]
+name = "ua-llm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Anthropic + OpenAI clients used by the standalone analyze pipeline and the embedding-search backend."
+
+[features]
+default = []
+# Local ONNX embeddings via fastembed-rs (downloads model on first run).
+local-embeddings = ["dep:fastembed"]
+
+[dependencies]
+ua-core    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+tokio      = { workspace = true }
+reqwest    = { workspace = true }
+async-trait = "0.1"
+secrecy    = "0.10"
+rand       = "0.9"
+fastembed  = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+wiremock = "0.6"

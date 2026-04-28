@@ -1,0 +1,62 @@
+{
+  "home.hero.badge": {
+    "message": "ранний доступ",
+    "description": "Hero badge above the title"
+  },
+  "home.hero.tagline": {
+    "message": "Rust-нативный инструмент для понимания кодовой базы. Анализируй, визуализируй и объясняй любой проект — от одного крейта до мульти-языкового монорепо.",
+    "description": "Hero tagline below the title"
+  },
+  "home.cta.primary": {
+    "message": "Начать",
+    "description": "Primary CTA button in hero"
+  },
+  "home.cta.github": {
+    "message": "GitHub",
+    "description": "Secondary CTA button to GitHub"
+  },
+  "home.features.title": {
+    "message": "// Что он делает",
+    "description": "Section heading above feature cards"
+  },
+  "home.feature.analyze.title": {
+    "message": "Анализ",
+    "description": "Landing feature card title"
+  },
+  "home.feature.analyze.desc": {
+    "message": "Парсинг Rust, Go, Python, TypeScript и других языков. Графы вызовов, деревья модулей и рёбра зависимостей с точностью tree-sitter.",
+    "description": "Landing feature card description"
+  },
+  "home.feature.visualise.title": {
+    "message": "Визуализация",
+    "description": "Landing feature card title"
+  },
+  "home.feature.visualise.desc": {
+    "message": "Интерактивный дашборд показывает графы кода, горячие пути и архитектурные слои. Зум от пакета до функции в один клик.",
+    "description": "Landing feature card description"
+  },
+  "home.feature.explain.title": {
+    "message": "Объяснение",
+    "description": "Landing feature card title"
+  },
+  "home.feature.explain.desc": {
+    "message": "Эмбеддинг фрагментов кода, семантический поиск и AI-объяснения того, как реально работает любая подсистема.",
+    "description": "Landing feature card description"
+  },
+  "home.cta.section.title": {
+    "message": "ЧИТАЙ ГРАФ",
+    "description": "Bottom CTA section heading"
+  },
+  "home.cta.section.text": {
+    "message": "Хватит гадать. Начни понимать ту кодовую базу, которая у тебя реально есть.",
+    "description": "Bottom CTA section text"
+  },
+  "home.cta.section.button": {
+    "message": "Читать документацию",
+    "description": "Bottom CTA section button"
+  },
+  "home.meta.description": {
+    "message": "Rust-нативный инструмент понимания кодовой базы. Анализируй, визуализируй, объясняй любой проект.",
+    "description": "Landing page meta description"
+  }
+}
