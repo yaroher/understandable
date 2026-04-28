@@ -59,6 +59,14 @@ That gives you all 40+ tree-sitter grammars and offline ONNX embeddings
 in one binary (~80 MB). See [Build features](#-build-features) to trim
 down if needed.
 
+> **Dashboard auto-build:** `build.rs` in `ua-server` runs before Cargo
+> embeds the React bundle. If `dashboard/dist/` is absent it tries
+> `pnpm install && pnpm build`, then falls back to `npm`. If neither
+> package manager is found it writes a one-page stub so the binary still
+> compiles — all CLI subcommands (`analyze`, `search`, `export`, …) work
+> without the dashboard. To get the full UI, install
+> [pnpm](https://pnpm.io/installation) before running `cargo install`.
+
 Verify the install:
 
 ```bash

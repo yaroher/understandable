@@ -1,5 +1,8 @@
 [package]
 name = "ua-server"
+# build.rs auto-builds dashboard/dist if pnpm/npm is available, or writes a
+# stub so `cargo install --git` doesn't fail when Node.js is absent.
+build = "build.rs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
