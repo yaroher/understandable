@@ -15,18 +15,5 @@
     "onboarding",
     "dashboard",
     "rust"
-  ],
-  "skills": "./skills/",
-  "agents": [
-    "./agents/architecture-analyzer.md",
-    "./agents/article-analyzer.md",
-    "./agents/assemble-reviewer.md",
-    "./agents/domain-analyzer.md",
-    "./agents/file-analyzer.md",
-    "./agents/graph-reviewer.md",
-    "./agents/knowledge-graph-guide.md",
-    "./agents/project-scanner.md",
-    "./agents/tour-builder.md"
-  ],
-  "hooks": "./hooks/hooks.json"
+  ]
 }
