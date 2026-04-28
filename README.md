@@ -1,5 +1,9 @@
 # understandable
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://github.com/yaroher/understandable/tree/main/.claude-plugin)
+[![GitHub Releases](https://img.shields.io/github/v/release/yaroher/understandable)](https://github.com/yaroher/understandable/releases/latest)
+
 Codebase comprehension as a single Rust binary. Turns any source repo
 into an interactive knowledge graph plus a guided tour, served from a
 local web dashboard.
@@ -15,9 +19,36 @@ local web dashboard.
   Cursor, Copilot, Codex, OpenCode, OpenClaw, Gemini, Pi, Antigravity,
   and VS Code via per-IDE manifest dirs.
 
-## Install
+---
 
-The recommended default brings every Cargo feature in:
+## 🚀 Quick Start
+
+### 1. Install the binary
+
+Pick whichever fits your environment.
+
+**GitHub Release tarball (no Rust toolchain required):**
+
+```bash
+# Pick the right asset for your platform from
+# https://github.com/yaroher/understandable/releases/latest
+# Then:
+tar -xzf understandable-x86_64-unknown-linux-gnu.tar.gz
+sudo mv understandable-x86_64-unknown-linux-gnu/understandable /usr/local/bin/
+```
+
+Available targets: `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`,
+`x86_64-apple-darwin`, `aarch64-apple-darwin`.
+
+**`cargo binstall` (downloads prebuilt from GitHub Releases, no Rust toolchain):**
+
+```bash
+cargo binstall understandable
+# Note: requires the crate to be published on crates.io.
+# Until first publish, use the cargo install --git path below.
+```
+
+**`cargo install` (build from source, full control over features):**
 
 ```bash
 cargo install --git https://github.com/yaroher/understandable understandable \
@@ -25,26 +56,161 @@ cargo install --git https://github.com/yaroher/understandable understandable \
 ```
 
 That gives you all 40+ tree-sitter grammars and offline ONNX embeddings
-in one binary (~80 MB). Trim down only when you know you don't need a
-slice:
+in one binary (~80 MB). See [Build features](#-build-features) to trim
+down if needed.
+
+Verify the install:
 
 ```bash
-# Slim builds (only when you know you won't need the dropped slice):
-cargo install --git https://github.com/yaroher/understandable understandable                   # tier-1 langs only, OpenAI/Ollama embeddings only
-cargo install --git https://github.com/yaroher/understandable understandable --features all-langs        # add tier-2 grammars, no local embeddings
-cargo install --git https://github.com/yaroher/understandable understandable --features local-embeddings # add ONNX embeddings, only tier-1 grammars
+understandable --version
 ```
+
+### 2. Install the IDE plugin
+
+See [Multi-Platform Installation](#-multi-platform-installation) — pick
+your IDE.
+
+### 3. Analyze your codebase
+
+```bash
+cd /path/to/your/project
+
+# One-time scaffolding (interactive wizard)
+understandable init
+
+# Build the knowledge graph
+understandable analyze
+
+# Open the interactive dashboard in your browser
+understandable dashboard
+```
+
+In Claude Code (or any supported IDE plugin), you can also use these
+slash commands:
+
+```
+/understand
+/understand-dashboard
+/understand-chat How does authentication work?
+/understand-explain src/auth/login.ts
+/understand-onboard
+/understand-domain
+/understand-knowledge ~/path/to/wiki
+/understand-diff
+```
+
+### 4. Keep going
+
+Read the full docs at https://yaroher.github.io/understandable/ (en + ru).
+
+---
+
+## 🌐 Multi-Platform Installation
+
+The Rust binary is the engine; per-IDE plugins are markdown skills +
+agents that shell out to it. All 9 IDE manifests live in this repo —
+pick your platform.
+
+### Claude Code (native plugin marketplace)
+
+```
+/plugin marketplace add yaroher/understandable
+/plugin install understandable
+```
+
+Or tell Claude Code to fetch the full instructions:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.claude-plugin/INSTALL.md
+```
+
+### Codex
+
+Tell Codex:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.codex/INSTALL.md
+```
+
+### OpenCode
+
+Tell OpenCode:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.opencode/INSTALL.md
+```
+
+### OpenClaw
+
+Tell OpenClaw:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.openclaw/INSTALL.md
+```
+
+### Cursor
+
+Cursor auto-discovers the plugin via `.cursor-plugin/plugin.json` when
+this repo is cloned into a workspace. For a global install or manual
+setup:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.cursor-plugin/INSTALL.md
+```
+
+### VS Code + GitHub Copilot
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.vscode/INSTALL.md
+```
+
+### Copilot CLI
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.copilot-plugin/INSTALL.md
+```
+
+### Gemini CLI
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.gemini/INSTALL.md
+```
+
+### Pi (Cline / Pi)
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.pi/INSTALL.md
+```
+
+### Antigravity
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yaroher/understandable/main/.antigravity/INSTALL.md
+```
+
+---
+
+## 🛠 Build features
 
 | Feature             | What it adds                                                        | Binary cost          |
 |---------------------|---------------------------------------------------------------------|----------------------|
 | (default)           | 11 tier-1 tree-sitter grammars, OpenAI/Ollama embeddings via HTTP   | ~40 MB               |
 | `all-langs`         | + ~30 tier-2 tree-sitter grammars                                   | ~+25 MB              |
-| `tier2`             | same as `all-langs` minus tier-1 (rarely used in isolation)         | depends on subset    |
 | `local-embeddings`  | + fastembed-rs ONNX runtime + tokenizers + hf-hub                   | ~+30 MB on disk; downloads model on first run |
+
+Slim builds (omit features you don't need):
+
+```bash
+cargo install --git https://github.com/yaroher/understandable understandable                             # tier-1 langs only, OpenAI/Ollama embeddings only
+cargo install --git https://github.com/yaroher/understandable understandable --features all-langs        # add tier-2 grammars, no local embeddings
+cargo install --git https://github.com/yaroher/understandable understandable --features local-embeddings # add ONNX embeddings, only tier-1 grammars
+```
 
 The binary is named `understandable`. The markdown skills/agents shell
 out to it — the same binary serves both the CLI and the embedded web
 dashboard.
+
+---
 
 ## Project settings (`understandable.yaml`)
 
@@ -164,7 +330,7 @@ project-local `.understandignore` all stacked. Common `.idea/`,
 `node_modules/`, `target/`, `dist/`, `.venv/` will be skipped
 automatically as long as they're listed in any of those files.
 
-## Quick start
+## Quick start (CLI reference)
 
 ```bash
 cd /path/to/your/repo
