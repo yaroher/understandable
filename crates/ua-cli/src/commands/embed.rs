@@ -257,12 +257,33 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
 }
 
 pub fn node_text(node: &GraphNode) -> String {
-    format!(
-        "{} :: {} :: {}",
-        node.name,
-        node.summary,
-        node.tags.join(",")
-    )
+    let parts: Vec<&str> = [
+        node.name.as_str(),
+        node.summary.as_str(),
+        // Joined tags string is built lazily below; keep this slot empty
+        // here so we don't allocate when tags is empty.
+        "",
+    ]
+    .into_iter()
+    .map(str::trim)
+    .filter(|s| !s.is_empty())
+    .collect();
+    let tags = node.tags.join(",");
+    let mut combined = parts.join(" :: ");
+    let tags_trimmed = tags.trim();
+    if !tags_trimmed.is_empty() {
+        if !combined.is_empty() {
+            combined.push_str(" :: ");
+        }
+        combined.push_str(tags_trimmed);
+    }
+    // Last-resort fallback so providers (Ollama in particular) never
+    // get an empty string — bge-m3 returns NaN on `""` and crashes the
+    // whole batch with a 500.
+    if combined.is_empty() {
+        combined = format!("node:{}", node.id);
+    }
+    combined
 }
 
 pub fn resolve_model_name_from_resolved(r: &ResolvedEmbed) -> String {
