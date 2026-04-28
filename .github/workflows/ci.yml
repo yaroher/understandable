@@ -70,8 +70,6 @@ jobs:
             experimental: false
           - os: macos-latest
             experimental: false
-          - os: windows-latest
-            experimental: true
     steps:
       - uses: actions/checkout@v4
       - name: Setup pnpm
