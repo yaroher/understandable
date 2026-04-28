@@ -83,6 +83,9 @@ function Dashboard() {
   const setDomainGraph = useDashboardStore((s) => s.setDomainGraph);
   const graphKind = useDashboardStore((s) => s.graphKind);
   const setGraphKind = useDashboardStore((s) => s.setGraphKind);
+  const kindMissing = useDashboardStore((s) => s.kindMissing);
+  const kindToast = useDashboardStore((s) => s.kindToast);
+  const dismissKindToast = useDashboardStore((s) => s.dismissKindToast);
   const browsePanelOpen = useDashboardStore((s) => s.browsePanelOpen);
   const toggleBrowsePanel = useDashboardStore((s) => s.toggleBrowsePanel);
   const ensureNode = useDashboardStore((s) => s.ensureNode);
@@ -251,8 +254,26 @@ function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const kind = readGraphKindFromUrl();
-    loadInitialGraph(kind)
+
+    // Read URL kind but treat non-codebase kinds as unproven until we
+    // actually fetch them. On a fresh reload with ?kind=domain we fall back
+    // to codebase so the page doesn't error if domain isn't built.
+    const urlKind = readGraphKindFromUrl();
+    const bootKind = urlKind === "codebase" ? urlKind : "codebase";
+
+    if (bootKind !== urlKind) {
+      // Correct the URL immediately so the switcher shows the right value.
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("kind", bootKind);
+        window.history.replaceState({}, "", url.toString());
+      } catch {
+        /* ignore */
+      }
+      useDashboardStore.setState({ graphKind: bootKind });
+    }
+
+    loadInitialGraph(bootKind)
       .then((loaded) => {
         if (cancelled) return;
         if (!loaded) {
@@ -261,7 +282,17 @@ function Dashboard() {
           );
           return;
         }
-        const { graph } = loaded;
+        // kindMissing result means the server is up but codebase isn't built —
+        // this shouldn't normally happen because bootKind is always "codebase",
+        // but guard against it anyway.
+        if ("kindMissing" in loaded && loaded.kindMissing) {
+          setLoadError(
+            "Codebase graph not found. Run `understandable analyze` first.",
+          );
+          return;
+        }
+        // Narrow away the kindMissing case (already handled above).
+        const { graph } = loaded as Exclude<typeof loaded, { kindMissing: true }>;
         // Re-run validation here so we can capture issue notes even when
         // the loader already validated. Cheap and gives us a structured
         // issue list for the warning banner.
@@ -269,7 +300,7 @@ function Dashboard() {
         if (result.success && result.data) {
           setGraph(result.data);
           setGraphIssues(result.issues);
-          if (graph.kind === "knowledge" || kind === "knowledge") {
+          if (graph.kind === "knowledge") {
             setViewMode("knowledge");
             useDashboardStore.getState().setIsKnowledgeGraph(true);
           }
@@ -391,7 +422,7 @@ function Dashboard() {
           <div className="w-px h-5 bg-border-subtle" />
           <PersonaSelector />
           <div className="w-px h-5 bg-border-subtle" />
-          <KindSwitcher kind={graphKind} onChange={(k) => void setGraphKind(k)} />
+          <KindSwitcher kind={graphKind} kindMissing={kindMissing} onChange={(k) => void setGraphKind(k)} />
           {graph && !isKnowledgeGraph && domainGraph && (
             <>
               <div className="w-px h-5 bg-border-subtle" />
@@ -545,6 +576,26 @@ function Dashboard() {
       {loadError && (
         <div className="px-5 py-3 bg-red-900/30 border-b border-red-700 text-red-200 text-sm">
           {loadError}
+        </div>
+      )}
+
+      {/* Kind-missing toast — non-blocking, auto-dismissed */}
+      {kindToast && (
+        <div className="flex items-center gap-3 px-5 py-2 bg-amber-900/25 border-b border-amber-700/60 text-amber-200 text-sm">
+          <svg className="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="flex-1">{kindToast}</span>
+          <button
+            type="button"
+            onClick={dismissKindToast}
+            className="shrink-0 text-amber-400/70 hover:text-amber-200 transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 

@@ -87,6 +87,24 @@ async function probeHealth(): Promise<HealthResponse | null> {
   }
 }
 
+/** Sentinel returned by `fetchJsonOrNull` when the server replies 404. */
+const NOT_FOUND = Symbol("NOT_FOUND");
+
+/**
+ * Like `fetchJson` but returns the `NOT_FOUND` sentinel on HTTP 404 instead
+ * of throwing. Any other non-2xx status still throws.
+ */
+async function fetchJsonOrNull<T>(
+  path: string,
+): Promise<T | typeof NOT_FOUND> {
+  const res = await fetch(path);
+  if (res.status === 404) return NOT_FOUND;
+  if (!res.ok) {
+    throw new Error(`GET ${path} -> ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(path);
   if (!res.ok) {
@@ -240,26 +258,45 @@ export const api: UnderstandableApi = {
  *
  * Returns the graph + a flag telling the caller which mode is in use,
  * so the UI can surface that information if needed.
+ *
+ * A `kindMissing: true` result means the server is up but returned 404
+ * for this kind (i.e. the user hasn't run `understandable <kind>` yet).
+ * In that case the caller should keep the existing graph and show a toast.
  */
 export async function loadInitialGraph(
   kind: GraphKind = readGraphKindFromUrl(),
-): Promise<{
-  graph: KnowledgeGraph;
-  mode: "api" | "static";
-} | null> {
+): Promise<
+  | { graph: KnowledgeGraph; mode: "api" | "static"; kindMissing?: false }
+  | { kindMissing: true }
+  | null
+> {
   const health = await probeHealth();
 
   if (health) {
     try {
-      const graph = await api.fullGraph(kind);
-      const result = validateGraph(graph);
-      if (result.success && result.data) {
-        return { graph: result.data, mode: "api" };
-      }
-      console.error(
-        "[ua-api] /api/graph returned data that failed schema validation:",
-        result.fatal,
+      const raw = await fetchJsonOrNull<KnowledgeGraph>(
+        withKind("/api/graph", kind),
       );
+      if (raw === NOT_FOUND) {
+        console.warn(
+          `[ua-api] /api/graph?kind=${kind} returned 404 — kind not built yet`,
+        );
+        // Only fall through to static fallback for codebase (the only kind
+        // that ships a static file). For other kinds: surface as kindMissing.
+        if (kind !== "codebase") {
+          return { kindMissing: true };
+        }
+        // fall through to static fallback below
+      } else {
+        const result = validateGraph(raw);
+        if (result.success && result.data) {
+          return { graph: result.data, mode: "api" };
+        }
+        console.error(
+          "[ua-api] /api/graph returned data that failed schema validation:",
+          result.fatal,
+        );
+      }
     } catch (err) {
       console.error(
         `[ua-api] failed to load /api/graph?kind=${kind}:`,
@@ -269,6 +306,10 @@ export async function loadInitialGraph(
   }
 
   // Fallback to static JSON for dev / file:// / standalone preview.
+  // Only attempted for codebase — other kinds have no static file.
+  if (kind !== "codebase") {
+    return null;
+  }
   try {
     const res = await fetch("/knowledge-graph.json");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -358,6 +399,16 @@ interface DashboardStore {
   extraEdges: Map<string, GraphEdge[]>;
   /** Current graph kind (URL `?kind=`). */
   graphKind: GraphKind;
+  /**
+   * Kinds that are known to be unavailable (server returned 404 when we
+   * tried to load them). Populated lazily as the user switches kinds.
+   */
+  kindMissing: Partial<Record<GraphKind, boolean>>;
+  /**
+   * Transient toast message to surface when a kind is not available.
+   * Cleared automatically after a timeout set by `setGraphKind`.
+   */
+  kindToast: string | null;
   /** Browse modal toggle. */
   browsePanelOpen: boolean;
   /** Last neighbor expansion result for the keyboard shortcut. */
@@ -375,6 +426,7 @@ interface DashboardStore {
   setBrowsePanelOpen: (open: boolean) => void;
   toggleBrowsePanel: () => void;
   setGraphKind: (kind: GraphKind) => Promise<void>;
+  dismissKindToast: () => void;
   searchRemote: (q: string, type?: string) => void;
   setNeighbors: (nodeId: string, depth?: number) => Promise<NeighborhoodResponse | null>;
   ensureNode: (id: string) => Promise<GraphNode | null>;
@@ -514,7 +566,7 @@ export function subscribeToEvents(): void {
     _reloadDebounceTimer = setTimeout(() => {
       const kind = useDashboardStore.getState().graphKind;
       void loadInitialGraph(kind).then((loaded) => {
-        if (!loaded) return;
+        if (!loaded || "kindMissing" in loaded) return;
         useDashboardStore.getState().setGraph(loaded.graph);
       });
     }, 300);
@@ -543,11 +595,16 @@ export function unsubscribeFromEvents(): void {
   }
 }
 
+// Module-scoped timer for auto-dismissing the kindToast.
+let _kindToastTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useDashboardStore = create<DashboardStore>()((set, get) => ({
   graph: null,
   singleNodes: new Map<string, GraphNode>(),
   extraEdges: new Map<string, GraphEdge[]>(),
   graphKind: readGraphKindFromUrl(),
+  kindMissing: {},
+  kindToast: null,
   browsePanelOpen: false,
   lastNeighborhood: null,
   remoteSearchResults: [],
@@ -561,8 +618,29 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
   setBrowsePanelOpen: (open) => set({ browsePanelOpen: open }),
   toggleBrowsePanel: () => set((s) => ({ browsePanelOpen: !s.browsePanelOpen })),
 
+  dismissKindToast: () => {
+    if (_kindToastTimer) {
+      clearTimeout(_kindToastTimer);
+      _kindToastTimer = null;
+    }
+    set({ kindToast: null });
+  },
+
   setGraphKind: async (kind) => {
-    // Update URL `?kind=` without reloading the page.
+    const previousKind = get().graphKind;
+
+    // If we already know this kind is missing, show toast immediately without
+    // hitting the network again.
+    if (get().kindMissing[kind]) {
+      const msg = `${kind} graph not built. Run \`understandable ${kind}\` to populate it.`;
+      if (_kindToastTimer) clearTimeout(_kindToastTimer);
+      set({ kindToast: msg });
+      _kindToastTimer = setTimeout(() => set({ kindToast: null }), 5000);
+      return;
+    }
+
+    // Optimistically update URL + kind before the fetch so the switcher
+    // reflects the pending state immediately.
     if (typeof window !== "undefined") {
       try {
         const url = new URL(window.location.href);
@@ -573,16 +651,46 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
       }
     }
     set({ graphKind: kind });
+
     try {
-      const [graph, layers, tour] = await Promise.all([
-        api.fullGraph(kind),
+      const [rawGraph, layers, tour] = await Promise.all([
+        fetchJsonOrNull<KnowledgeGraph>(withKind("/api/graph", kind)),
         api.layers(kind).catch(() => [] as Layer[]),
         api.tour(kind).catch(() => [] as TourStep[]),
       ]);
-      const result = validateGraph({ ...graph, layers, tour });
+
+      if (rawGraph === NOT_FOUND) {
+        // Kind not built yet — revert kind + URL, mark as missing, show toast.
+        if (typeof window !== "undefined") {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("kind", previousKind);
+            window.history.replaceState({}, "", url.toString());
+          } catch {
+            /* ignore */
+          }
+        }
+        const msg = `${kind} graph not built. Run \`understandable ${kind}\` to populate it.`;
+        if (_kindToastTimer) clearTimeout(_kindToastTimer);
+        set({
+          graphKind: previousKind,
+          kindMissing: { ...get().kindMissing, [kind]: true },
+          kindToast: msg,
+        });
+        _kindToastTimer = setTimeout(() => set({ kindToast: null }), 5000);
+        return;
+      }
+
+      const result = validateGraph({ ...rawGraph, layers, tour });
       const validated =
-        result.success && result.data ? result.data : { ...graph, layers, tour };
+        result.success && result.data
+          ? result.data
+          : { ...rawGraph, layers, tour };
       get().setGraph(validated);
+      // Clear missing flag if the kind loaded successfully (e.g. user rebuilt).
+      const nextMissing = { ...get().kindMissing };
+      delete nextMissing[kind];
+      set({ kindMissing: nextMissing, kindToast: null });
       if (kind === "knowledge") {
         set({ viewMode: "knowledge", isKnowledgeGraph: true });
       } else {
@@ -590,6 +698,17 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
       }
     } catch (err) {
       console.error(`[store] setGraphKind(${kind}) failed:`, err);
+      // On unexpected error, revert kind + URL so switcher stays consistent.
+      if (typeof window !== "undefined") {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set("kind", previousKind);
+          window.history.replaceState({}, "", url.toString());
+        } catch {
+          /* ignore */
+        }
+      }
+      set({ graphKind: previousKind });
     }
   },
 

@@ -178,8 +178,62 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
         joinset.spawn(async move {
             let _permit = permit;
             let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
-            let vectors = provider.embed(&refs).await?;
-            Ok((pairs, vectors))
+            // Try the full batch first. On failure (e.g. Ollama bge-m3
+            // NaN-on-some-input bug, oversize input, etc.) fall through
+            // to per-text retries with progressively simpler text. Each
+            // text owns its own fallback chain so one bad node doesn't
+            // poison the whole batch.
+            match provider.embed(&refs).await {
+                Ok(v) => Ok((pairs, v)),
+                Err(_) if pairs.len() == 1 => {
+                    // Single-text batch already; rerun fallback chain inline.
+                    let (id, _) = &pairs[0];
+                    let chain = fallback_texts(id, &texts[0]);
+                    for candidate in chain {
+                        let res = provider.embed(&[candidate.as_str()]).await;
+                        if let Ok(v) = res {
+                            tracing::warn!(
+                                node_id = %id,
+                                "embed: original text failed, succeeded with fallback ({} chars)",
+                                candidate.len()
+                            );
+                            return Ok((pairs, v));
+                        }
+                    }
+                    Err(anyhow::anyhow!(
+                        "embed failed for node `{id}` with all fallback simplifications"
+                    ))
+                }
+                Err(_) => {
+                    // Multi-text batch failed: retry each text individually
+                    // so one bad input doesn't kill the rest.
+                    let mut out_vectors: Vec<Vec<f32>> = Vec::with_capacity(pairs.len());
+                    let mut out_pairs: Vec<(String, String)> = Vec::with_capacity(pairs.len());
+                    for ((id, hash), text) in pairs.iter().zip(texts.iter()) {
+                        let chain = fallback_texts(id, text);
+                        let mut got = None;
+                        for candidate in chain {
+                            if let Ok(mut v) = provider.embed(&[candidate.as_str()]).await {
+                                if let Some(vec) = v.pop() {
+                                    got = Some(vec);
+                                    break;
+                                }
+                            }
+                        }
+                        match got {
+                            Some(v) => {
+                                out_vectors.push(v);
+                                out_pairs.push((id.clone(), hash.clone()));
+                            }
+                            None => tracing::warn!(
+                                node_id = %id,
+                                "embed: skipped node — all fallback texts failed"
+                            ),
+                        }
+                    }
+                    Ok((out_pairs, out_vectors))
+                }
+            }
         });
     }
 
@@ -254,6 +308,35 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     }
     println!("embedded {done}/{total} node(s) into `{model}` (dim={dim})");
     Ok(())
+}
+
+/// Build a fallback chain of progressively simpler texts to try when
+/// the provider rejects the original (e.g. Ollama bge-m3 returning NaN
+/// on certain inputs, length overflow, weird unicode). Order goes from
+/// most-informative to least; the last entry is always non-empty.
+fn fallback_texts(id: &str, original: &str) -> Vec<String> {
+    let mut out = Vec::with_capacity(5);
+    // 1. ASCII-only sanitisation — strip control bytes and non-printable.
+    let sanitised: String = original
+        .chars()
+        .filter(|c| !c.is_control())
+        .collect();
+    if !sanitised.is_empty() && sanitised != original {
+        out.push(sanitised.clone());
+    }
+    // 2. Truncated to 500 chars (well under bge-m3's 8192-token cap).
+    if original.chars().count() > 500 {
+        let trunc: String = original.chars().take(500).collect();
+        out.push(trunc);
+    }
+    // 3. First 100 chars — minimal context.
+    if original.chars().count() > 100 {
+        let head: String = original.chars().take(100).collect();
+        out.push(head);
+    }
+    // 4. Just the node id — guaranteed non-empty, ASCII-safe.
+    out.push(format!("node:{id}"));
+    out
 }
 
 pub fn node_text(node: &GraphNode) -> String {
