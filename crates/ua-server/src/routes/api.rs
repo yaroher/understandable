@@ -1,16 +1,24 @@
 //! JSON API mounted under `/api`.
 
+use std::convert::Infallible;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{
+        sse::{Event as SseEvent, KeepAlive, Sse},
+        IntoResponse, Response,
+    },
     routing::get,
     Json, Router,
 };
+use futures::stream::Stream;
+use futures::StreamExt as _;
 use serde::Deserialize;
+use tokio_stream::wrappers::BroadcastStream;
 use ua_core::{EdgeType, GraphEdge, GraphNode, KnowledgeGraph, NodeType};
 
 use crate::state::{AppState, GraphKind};
@@ -29,6 +37,7 @@ pub fn router() -> Router<Arc<AppState>> {
         .route("/api/node", get(node_by_id))
         .route("/api/neighbors", get(node_neighbors))
         .route("/api/diff", get(diff_overlay))
+        .route("/api/events", get(events))
 }
 
 async fn health() -> Json<serde_json::Value> {
@@ -83,7 +92,7 @@ async fn full_graph(State(state): State<Arc<AppState>>, Query(q): Query<KindQuer
 }
 
 async fn project_meta(State(state): State<Arc<AppState>>) -> Json<ua_core::ProjectMeta> {
-    Json(state.graph.project.clone())
+    Json(state.primary_graph().project.clone())
 }
 
 async fn layers(State(state): State<Arc<AppState>>, Query(q): Query<KindQuery>) -> Response {
@@ -303,15 +312,16 @@ async fn search(
         types,
         limit: Some(q.limit),
     };
-    let hits = state
-        .search
-        .search(&q.q, &opts)
-        .into_iter()
-        .map(|r| SearchHit {
-            id: r.node_id,
-            score: r.score,
-        })
-        .collect();
+    let hits = state.with_search(|engine| {
+        engine
+            .search(&q.q, &opts)
+            .into_iter()
+            .map(|r| SearchHit {
+                id: r.node_id,
+                score: r.score,
+            })
+            .collect::<Vec<_>>()
+    });
     Json(hits)
 }
 
@@ -321,7 +331,8 @@ pub struct NodeIdQuery {
 }
 
 async fn node_by_id(State(state): State<Arc<AppState>>, Query(q): Query<NodeIdQuery>) -> Response {
-    match state.graph.nodes.iter().find(|n| n.id == q.id) {
+    let graph = state.primary_graph();
+    match graph.nodes.iter().find(|n| n.id == q.id) {
         Some(n) => Json(n.clone()).into_response(),
         None => (StatusCode::NOT_FOUND, "node not found").into_response(),
     }
@@ -346,8 +357,9 @@ async fn node_neighbors(
     State(state): State<Arc<AppState>>,
     Query(q): Query<NeighborQuery>,
 ) -> Response {
+    let graph = state.primary_graph();
     let id = q.id.as_str();
-    let Some(center) = state.graph.nodes.iter().find(|n| n.id == id) else {
+    let Some(center) = graph.nodes.iter().find(|n| n.id == id) else {
         return (StatusCode::NOT_FOUND, "node not found").into_response();
     };
     let depth = q.depth.unwrap_or(1).clamp(1, 4);
@@ -368,7 +380,7 @@ async fn node_neighbors(
         }
         let mut next: Vec<&str> = Vec::new();
         for &cur in frontier.iter() {
-            for e in state.graph.edges.iter() {
+            for e in graph.edges.iter() {
                 if e.source != cur && e.target != cur {
                     continue;
                 }
@@ -389,8 +401,7 @@ async fn node_neighbors(
         frontier = next;
     }
     visited.remove(id);
-    let neighbors: Vec<&GraphNode> = state
-        .graph
+    let neighbors: Vec<&GraphNode> = graph
         .nodes
         .iter()
         .filter(|n| visited.contains(n.id.as_str()))
@@ -526,6 +537,26 @@ async fn get_source(
         slice,
     )
         .into_response()
+}
+
+/// Server-Sent Events endpoint. Clients subscribe here and receive a
+/// `graph-reloaded` event whenever the file watcher detects an updated
+/// archive and successfully reloads the in-memory graph.
+async fn events(
+    State(state): State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<SseEvent, Infallible>>> {
+    let rx = state.tx.subscribe();
+    let stream = BroadcastStream::new(rx).filter_map(|res| async move {
+        let ev = res.ok()?;
+        // Serialize `ReloadEvent` as the JSON data field.
+        let data = serde_json::to_string(&ev).ok()?;
+        Some(Ok(SseEvent::default().event("graph-reloaded").data(data)))
+    });
+    Sse::new(stream).keep_alive(
+        KeepAlive::new()
+            .interval(Duration::from_secs(15))
+            .text("ping"),
+    )
 }
 
 fn parse_node_type(s: Option<&str>) -> Option<NodeType> {

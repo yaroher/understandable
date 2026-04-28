@@ -2,15 +2,27 @@
 //!
 //! Holds in-memory [`KnowledgeGraph`]s (one per kind: codebase / domain /
 //! knowledge) plus a reusable [`SearchEngine`] over the codebase graph
-//! for the lifetime of the process. Each graph is wrapped in `Arc` so
-//! HTTP handlers can serialise it without cloning.
+//! for the lifetime of the process. Each graph slot is wrapped in
+//! [`arc_swap::ArcSwap`] so HTTP handlers can load a snapshot without
+//! holding a lock, and the file-watcher task can swap a freshly-loaded
+//! graph in atomically at any time.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use arc_swap::ArcSwap;
+use serde::Serialize;
+use tokio::sync::broadcast;
 use ua_core::KnowledgeGraph;
 use ua_persist::{ProjectLayout, Storage};
 use ua_search::SearchEngine;
+
+/// Capacity of the broadcast channel. Each new subscriber gets a copy of
+/// the last `BROADCAST_CAP` events so they don't miss a reload that fired
+/// right before they connected. In practice we send at most a handful of
+/// events per minute, so 16 is ample.
+const BROADCAST_CAP: usize = 16;
 
 /// Logical kinds that the dashboard can serve. Mirrors
 /// `ProjectLayout::graph_archive_for`.
@@ -40,15 +52,20 @@ impl GraphKind {
     }
 }
 
+/// The payload pushed to all SSE subscribers when a graph is reloaded.
+#[derive(Clone, Debug, Serialize)]
+pub struct ReloadEvent {
+    pub kind: String,
+}
+
 pub struct AppState {
-    /// The canonical codebase graph. Always present (may be empty).
-    pub graph: Arc<KnowledgeGraph>,
-    /// Optional domain-overlay graph, if a domain DB exists.
-    pub domain_graph: Option<Arc<KnowledgeGraph>>,
-    /// Optional knowledge-overlay graph, if a knowledge DB exists.
-    pub knowledge_graph: Option<Arc<KnowledgeGraph>>,
-    /// Search index built on the codebase graph nodes.
-    pub search: SearchEngine,
+    /// Per-kind graph slots. Keyed by `"codebase"`, `"domain"`,
+    /// `"knowledge"`. Each slot is an `ArcSwap` so the watcher can do
+    /// a zero-copy atomic swap while readers hold their own `Arc`s.
+    graphs: HashMap<String, ArcSwap<Option<KnowledgeGraph>>>,
+    /// Search index over the primary (codebase) graph. Rebuilt on each
+    /// codebase reload under a mutex.
+    search: std::sync::Mutex<SearchEngine>,
     /// Storage directory; used to look up overlay artefacts like
     /// `diff-overlay.json`.
     pub storage_dir: PathBuf,
@@ -57,21 +74,83 @@ pub struct AppState {
     /// canonicalise inside this prefix. May be empty in tests, in which
     /// case `/api/source` rejects all reads.
     pub project_root: PathBuf,
+    /// Layout used by [`Self::reload_kind`] to locate archives.
+    layout: ProjectLayout,
+    /// Broadcast sender for live-reload SSE events. Cloning the sender
+    /// does *not* create a new channel — all clones share the same one.
+    pub tx: broadcast::Sender<ReloadEvent>,
 }
 
+// `ArcSwap<T>` is Send+Sync when T: Send+Sync. `KnowledgeGraph` is
+// Send+Sync, and `Option<KnowledgeGraph>` is too.
+// `broadcast::Sender<T>` is also Send+Sync when T: Send+Sync.
+// `std::sync::Mutex<SearchEngine>` is Send+Sync when SearchEngine: Send.
+// All of the above hold, so AppState is Send+Sync.
+const _: fn() = || {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<AppState>();
+};
+
 impl AppState {
+    // -----------------------------------------------------------------------
+    // Internal helpers
+    // -----------------------------------------------------------------------
+
+    fn make_graphs(
+        codebase: KnowledgeGraph,
+        domain: Option<KnowledgeGraph>,
+        knowledge: Option<KnowledgeGraph>,
+    ) -> HashMap<String, ArcSwap<Option<KnowledgeGraph>>> {
+        let mut m = HashMap::new();
+        m.insert(
+            "codebase".to_string(),
+            ArcSwap::new(Arc::new(Some(codebase))),
+        );
+        m.insert(
+            "domain".to_string(),
+            ArcSwap::new(Arc::new(domain)),
+        );
+        m.insert(
+            "knowledge".to_string(),
+            ArcSwap::new(Arc::new(knowledge)),
+        );
+        m
+    }
+
+    fn build(
+        graphs: HashMap<String, ArcSwap<Option<KnowledgeGraph>>>,
+        storage_dir: PathBuf,
+        project_root: PathBuf,
+        layout: ProjectLayout,
+    ) -> Self {
+        // Seed the search engine from whatever is in the codebase slot.
+        let search_nodes = graphs
+            .get("codebase")
+            .and_then(|s| {
+                s.load().as_ref().as_ref().map(|g| g.nodes.clone())
+            })
+            .unwrap_or_default();
+        let (tx, _) = broadcast::channel(BROADCAST_CAP);
+        Self {
+            graphs,
+            search: std::sync::Mutex::new(SearchEngine::new(search_nodes)),
+            storage_dir,
+            project_root,
+            layout,
+            tx,
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Constructors
+    // -----------------------------------------------------------------------
+
     /// Construct from a pre-loaded codebase graph. Domain/knowledge slots
     /// stay empty. Mostly useful in tests.
     pub fn new(graph: KnowledgeGraph) -> Self {
-        let search = SearchEngine::new(graph.nodes.clone());
-        Self {
-            graph: Arc::new(graph),
-            domain_graph: None,
-            knowledge_graph: None,
-            search,
-            storage_dir: PathBuf::new(),
-            project_root: PathBuf::new(),
-        }
+        let layout = ProjectLayout::under(PathBuf::new());
+        let graphs = Self::make_graphs(graph, None, None);
+        Self::build(graphs, PathBuf::new(), PathBuf::new(), layout)
     }
 
     /// Build with the full set of pre-loaded graphs and a storage
@@ -82,15 +161,9 @@ impl AppState {
         knowledge: Option<KnowledgeGraph>,
         storage_dir: PathBuf,
     ) -> Self {
-        let search = SearchEngine::new(graph.nodes.clone());
-        Self {
-            graph: Arc::new(graph),
-            domain_graph: domain.map(Arc::new),
-            knowledge_graph: knowledge.map(Arc::new),
-            search,
-            storage_dir,
-            project_root: PathBuf::new(),
-        }
+        let layout = ProjectLayout::under(PathBuf::new());
+        let graphs = Self::make_graphs(graph, domain, knowledge);
+        Self::build(graphs, storage_dir, PathBuf::new(), layout)
     }
 
     /// Variant of [`Self::with_graphs`] that also records a project root
@@ -105,15 +178,9 @@ impl AppState {
         storage_dir: PathBuf,
         project_root: PathBuf,
     ) -> Self {
-        let search = SearchEngine::new(graph.nodes.clone());
-        Self {
-            graph: Arc::new(graph),
-            domain_graph: domain.map(Arc::new),
-            knowledge_graph: knowledge.map(Arc::new),
-            search,
-            storage_dir,
-            project_root,
-        }
+        let layout = ProjectLayout::under(PathBuf::new());
+        let graphs = Self::make_graphs(graph, domain, knowledge);
+        Self::build(graphs, storage_dir, project_root, layout)
     }
 
     /// Open every per-kind store under `project_root`. Missing kinds
@@ -178,25 +245,104 @@ impl AppState {
         // canonicalisation fails (e.g. on a deleted dir during tests).
         let canonical_root =
             std::fs::canonicalize(project_root).unwrap_or_else(|_| project_root.to_path_buf());
-        Ok(Self::with_graphs_and_root(
-            primary,
-            domain,
-            knowledge,
-            layout.root.clone(),
-            canonical_root,
-        ))
+
+        let storage_dir = layout.root.clone();
+        let graphs = Self::make_graphs(primary, domain, knowledge);
+        Ok(Self::build(graphs, storage_dir, canonical_root, layout))
     }
 
-    /// Pick a cached graph by kind. Falls back to the primary
-    /// `state.graph` when the requested overlay slot is empty but the
-    /// primary graph itself was loaded for that kind (i.e. when the
-    /// dashboard was booted with `--kind=domain` etc.).
+    // -----------------------------------------------------------------------
+    // Runtime graph access
+    // -----------------------------------------------------------------------
+
+    /// Pick a cached graph by kind. Returns `None` when the slot is empty
+    /// (i.e. the corresponding `understandable <kind>` command has never
+    /// been run). The caller receives an owned `Arc` and can hold it across
+    /// await points without blocking the watcher.
     pub fn graph_for(&self, kind: GraphKind) -> Option<Arc<KnowledgeGraph>> {
-        match kind {
-            GraphKind::Codebase => Some(self.graph.clone()),
-            GraphKind::Domain => self.domain_graph.clone(),
-            GraphKind::Knowledge => self.knowledge_graph.clone(),
+        let slot = self.graphs.get(kind.as_str())?;
+        // `load_full()` increments the reference count and gives us an
+        // `Arc<Option<KnowledgeGraph>>`. We then flatten it into
+        // `Option<Arc<KnowledgeGraph>>`.
+        let arc_opt: Arc<Option<KnowledgeGraph>> = slot.load_full();
+        // We can't move out of an Arc, so we clone the inner graph.
+        arc_opt.as_ref().as_ref().map(|g| Arc::new(g.clone()))
+    }
+
+    /// Borrow the search engine for the duration of a closure. Returns
+    /// the closure's return value, or `Default::default()` if the mutex
+    /// is poisoned.
+    pub fn with_search<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&SearchEngine) -> R,
+        R: Default,
+    {
+        match self.search.lock() {
+            Ok(guard) => f(&*guard),
+            Err(_) => R::default(),
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Live-reload
+    // -----------------------------------------------------------------------
+
+    /// Reload a single graph kind from its archive on disk and broadcast
+    /// a [`ReloadEvent`] to all SSE subscribers. Called by the file-watcher
+    /// task; safe to call from any async context.
+    pub async fn reload_kind(&self, kind: &str) -> anyhow::Result<()> {
+        let archive = self.layout.graph_archive_for(kind);
+        if !archive.exists() {
+            // Archive removed between the watcher event and now — leave
+            // the in-memory graph in place (stale but non-crashing).
+            return Ok(());
+        }
+        let storage = Storage::open_kind(&self.layout, kind).await?;
+        let graph = storage.load_graph().await?;
+
+        // If this is the codebase graph, rebuild the search index too.
+        if kind == "codebase" {
+            let new_engine = SearchEngine::new(graph.nodes.clone());
+            if let Ok(mut guard) = self.search.lock() {
+                *guard = new_engine;
+            }
+        }
+
+        // Atomically swap the slot. All `Arc` clones that handlers
+        // already hold keep pointing at the old graph until they drop.
+        if let Some(slot) = self.graphs.get(kind) {
+            slot.store(Arc::new(Some(graph)));
+        }
+
+        // Notify SSE subscribers. `send` fails only if there are zero
+        // active receivers — that's fine, just ignore it.
+        let _ = self.tx.send(ReloadEvent {
+            kind: kind.to_string(),
+        });
+
+        Ok(())
+    }
+
+    /// The primary graph (always `"codebase"` slot) — used by routes that
+    /// don't accept a `?kind=` parameter (e.g. `/api/project`).
+    ///
+    /// Returns `None` only in the extremely unlikely scenario that the
+    /// codebase slot was never populated (shouldn't happen in production;
+    /// callers should handle `None` gracefully).
+    pub fn primary_graph(&self) -> Arc<KnowledgeGraph> {
+        // The codebase slot is always populated by every constructor, so
+        // the unwrap_or_else path is a safety net for tests that somehow
+        // build a state without a codebase graph.
+        self.graph_for(GraphKind::Codebase).unwrap_or_else(|| {
+            Arc::new(KnowledgeGraph::new(ua_core::ProjectMeta {
+                name: String::new(),
+                languages: vec![],
+                frameworks: vec![],
+                description: String::new(),
+                analyzed_at: String::new(),
+                git_commit_hash: String::new(),
+            }))
+        })
     }
 }
 

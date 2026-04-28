@@ -12,17 +12,21 @@ authors.workspace = true
 description = "axum dashboard server with embedded React build."
 
 [dependencies]
-ua-core    = { workspace = true }
-ua-persist = { workspace = true }
-ua-search  = { workspace = true }
-axum       = { workspace = true }
-tower-http = { workspace = true }
-tokio      = { workspace = true }
-serde      = { workspace = true }
-serde_json = { workspace = true }
-tracing    = { workspace = true }
-anyhow     = { workspace = true }
-rust-embed = { workspace = true }
+ua-core      = { workspace = true }
+ua-persist   = { workspace = true }
+ua-search    = { workspace = true }
+axum         = { workspace = true }
+tower-http   = { workspace = true }
+tokio        = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+tracing      = { workspace = true }
+anyhow       = { workspace = true }
+rust-embed   = { workspace = true }
+notify       = "6"
+arc-swap     = "1"
+futures      = "0.3"
+tokio-stream = { version = "0.1", features = ["sync"] }
 
 [dev-dependencies]
 tokio = { workspace = true }

@@ -489,6 +489,60 @@ function navigateTourToLayer(
 let _remoteSearchTimer: ReturnType<typeof setTimeout> | null = null;
 let _remoteSearchSeq = 0;
 
+// ---------------------------------------------------------------------------
+// Live-reload via SSE
+// ---------------------------------------------------------------------------
+
+let _eventSource: EventSource | null = null;
+let _reloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Open a persistent SSE connection to `/api/events`. On every
+ * `graph-reloaded` event, debounce 300 ms then re-fetch the full graph
+ * for the current kind. Auto-reconnects after 2 s on any error.
+ *
+ * Idempotent — safe to call multiple times; only one connection is kept.
+ */
+export function subscribeToEvents(): void {
+  if (_eventSource) return;
+  const es = new EventSource("/api/events");
+  _eventSource = es;
+
+  es.addEventListener("graph-reloaded", (e) => {
+    console.info("[live] graph-reloaded", (e as MessageEvent).data);
+    if (_reloadDebounceTimer) clearTimeout(_reloadDebounceTimer);
+    _reloadDebounceTimer = setTimeout(() => {
+      const kind = useDashboardStore.getState().graphKind;
+      void loadInitialGraph(kind).then((loaded) => {
+        if (!loaded) return;
+        useDashboardStore.getState().setGraph(loaded.graph);
+      });
+    }, 300);
+  });
+
+  es.onerror = () => {
+    console.warn("[live] SSE connection lost; reconnecting in 2 s");
+    es.close();
+    _eventSource = null;
+    setTimeout(subscribeToEvents, 2000);
+  };
+}
+
+/**
+ * Close the SSE connection and cancel any pending reload. Call this on
+ * component unmount to prevent memory leaks in tests.
+ */
+export function unsubscribeFromEvents(): void {
+  if (_reloadDebounceTimer) {
+    clearTimeout(_reloadDebounceTimer);
+    _reloadDebounceTimer = null;
+  }
+  if (_eventSource) {
+    _eventSource.close();
+    _eventSource = null;
+  }
+}
+
 export const useDashboardStore = create<DashboardStore>()((set, get) => ({
   graph: null,
   singleNodes: new Map<string, GraphNode>(),

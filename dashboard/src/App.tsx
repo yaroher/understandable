@@ -6,6 +6,8 @@ import {
   api,
   loadInitialGraph,
   readGraphKindFromUrl,
+  subscribeToEvents,
+  unsubscribeFromEvents,
   useDashboardStore,
 } from "./store";
 import GraphView from "./components/GraphView";
@@ -99,6 +101,16 @@ function Dashboard() {
       .catch(() => {
         /* ignore — project meta is optional for theming */
       });
+  }, []);
+
+  // Live-reload: open an SSE connection so graph changes made by
+  // `understandable analyze` in another terminal are reflected without
+  // restarting the server.
+  useEffect(() => {
+    subscribeToEvents();
+    return () => {
+      unsubscribeFromEvents();
+    };
   }, []);
 
   // Define keyboard shortcuts

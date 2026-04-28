@@ -4,13 +4,18 @@
 //! once per `serve` call and cached as `Arc<KnowledgeGraph>` in
 //! [`AppState`]. Every endpoint is read-only — mutations happen via the
 //! CLI.
+//!
+//! A background file-watcher task monitors the storage directory for
+//! archive updates and reloads the in-memory graph automatically, sending
+//! an SSE event to all connected dashboard clients.
 
 pub mod assets;
 pub mod routes;
 pub mod state;
 
+use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::Context;
@@ -99,7 +104,13 @@ pub async fn serve_kind(project_root: &Path, addr: SocketAddr, kind: &str) -> an
         .await
         .with_context(|| format!("loading project graphs (kind={kind})"))?;
     let state = Arc::new(state);
-    let app = router_for(state, addr);
+
+    // Spawn the live-reload file watcher. If the storage directory doesn't
+    // exist yet (first run before `understandable analyze`) it logs a
+    // warning and skips watching — the server still works for static data.
+    spawn_watcher(Arc::clone(&state));
+
+    let app = router_for(Arc::clone(&state), addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(?addr, kind, "ua-server listening");
     axum::serve(listener, app)
@@ -116,4 +127,130 @@ async fn shutdown_signal() {
     } else {
         tracing::info!("ctrl_c received; shutting down");
     }
+}
+
+// ---------------------------------------------------------------------------
+// File watcher (live-reload)
+// ---------------------------------------------------------------------------
+
+/// Spawn a detached tokio task that watches the storage directory for
+/// archive modifications and triggers [`AppState::reload_kind`].
+///
+/// The watcher is non-recursive: we only care about `.tar.zst` files
+/// placed directly in the storage dir, not deep sub-tree changes.
+///
+/// Errors setting up the watcher are non-fatal: the server continues
+/// to serve the initial in-memory graphs; only live-reload is disabled.
+fn spawn_watcher(state: Arc<AppState>) {
+    use notify::{Event, EventKind, RecursiveMode, Watcher};
+
+    let storage_dir = state.storage_dir.clone();
+
+    if !storage_dir.exists() {
+        tracing::warn!(
+            dir = %storage_dir.display(),
+            "storage directory does not exist; live-reload disabled"
+        );
+        return;
+    }
+
+    // `notify` callbacks run on a thread-pool thread; bridge into tokio
+    // via an unbounded mpsc channel.
+    let (tx_evt, mut rx_evt) = tokio::sync::mpsc::unbounded_channel::<PathBuf>();
+
+    let mut watcher = match notify::recommended_watcher(move |res: notify::Result<Event>| {
+        if let Ok(ev) = res {
+            if matches!(ev.kind, EventKind::Modify(_) | EventKind::Create(_)) {
+                for p in ev.paths {
+                    let _ = tx_evt.send(p);
+                }
+            }
+        }
+    }) {
+        Ok(w) => w,
+        Err(e) => {
+            tracing::warn!(error = %e, "failed to create file watcher; live-reload disabled");
+            return;
+        }
+    };
+
+    if let Err(e) = watcher.watch(&storage_dir, RecursiveMode::NonRecursive) {
+        tracing::warn!(
+            error = %e,
+            dir = %storage_dir.display(),
+            "failed to watch storage directory; live-reload disabled"
+        );
+        return;
+    }
+
+    // Clone the layout's db_name to pass into the async task.
+    // We re-derive it by looking at archive names that match the known pattern.
+    tokio::spawn(async move {
+        // Keep the watcher alive for the lifetime of this task.
+        let _watcher = watcher;
+
+        // Debounce table: kind → earliest instant at which we should fire.
+        let mut pending: HashMap<String, tokio::time::Instant> = HashMap::new();
+        let debounce = tokio::time::Duration::from_millis(500);
+        let tick = tokio::time::Duration::from_millis(100);
+
+        loop {
+            tokio::select! {
+                msg = rx_evt.recv() => {
+                    match msg {
+                        Some(path) => {
+                            if let Some(kind) = kind_from_path(&path) {
+                                let deadline = tokio::time::Instant::now() + debounce;
+                                pending.insert(kind, deadline);
+                            }
+                        }
+                        None => break, // sender dropped; shut down
+                    }
+                }
+                _ = tokio::time::sleep(tick) => {
+                    let now = tokio::time::Instant::now();
+                    let ready: Vec<String> = pending
+                        .iter()
+                        .filter(|(_, &deadline)| now >= deadline)
+                        .map(|(k, _)| k.clone())
+                        .collect();
+                    for k in ready {
+                        pending.remove(&k);
+                        match state.reload_kind(&k).await {
+                            Err(e) => tracing::warn!(error = %e, kind = %k, "live-reload failed"),
+                            Ok(()) => tracing::info!(kind = %k, "graph reloaded (live-reload)"),
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/// Infer the graph kind from an archive path by inspecting the filename.
+///
+/// Known patterns (where `<stem>` is the db_name, usually `"graph"`):
+/// - `<stem>.tar.zst`              → `"codebase"`
+/// - `<stem>.domain.tar.zst`       → `"domain"`
+/// - `<stem>.knowledge.tar.zst`    → `"knowledge"`
+fn kind_from_path(path: &Path) -> Option<String> {
+    let name = path.file_name()?.to_string_lossy();
+    // Must end in .tar.zst
+    let stem = name.strip_suffix(".tar.zst")?;
+
+    // Check for overlay suffixes first (most specific first).
+    for kind in &["domain", "knowledge"] {
+        if stem.ends_with(&format!(".{kind}")) {
+            return Some(kind.to_string());
+        }
+    }
+
+    // If no overlay suffix and it otherwise looks like a graph archive
+    // (non-empty stem, no extra dots that we don't recognise), treat it
+    // as codebase.
+    if !stem.is_empty() {
+        return Some("codebase".to_string());
+    }
+
+    None
 }
