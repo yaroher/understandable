@@ -106,14 +106,8 @@ impl AppState {
             "codebase".to_string(),
             ArcSwap::new(Arc::new(Some(codebase))),
         );
-        m.insert(
-            "domain".to_string(),
-            ArcSwap::new(Arc::new(domain)),
-        );
-        m.insert(
-            "knowledge".to_string(),
-            ArcSwap::new(Arc::new(knowledge)),
-        );
+        m.insert("domain".to_string(), ArcSwap::new(Arc::new(domain)));
+        m.insert("knowledge".to_string(), ArcSwap::new(Arc::new(knowledge)));
         m
     }
 
@@ -126,9 +120,7 @@ impl AppState {
         // Seed the search engine from whatever is in the codebase slot.
         let search_nodes = graphs
             .get("codebase")
-            .and_then(|s| {
-                s.load().as_ref().as_ref().map(|g| g.nodes.clone())
-            })
+            .and_then(|s| s.load().as_ref().as_ref().map(|g| g.nodes.clone()))
             .unwrap_or_default();
         let (tx, _) = broadcast::channel(BROADCAST_CAP);
         Self {
@@ -278,7 +270,7 @@ impl AppState {
         R: Default,
     {
         match self.search.lock() {
-            Ok(guard) => f(&*guard),
+            Ok(guard) => f(&guard),
             Err(_) => R::default(),
         }
     }

@@ -317,10 +317,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
 fn fallback_texts(id: &str, original: &str) -> Vec<String> {
     let mut out = Vec::with_capacity(5);
     // 1. ASCII-only sanitisation — strip control bytes and non-printable.
-    let sanitised: String = original
-        .chars()
-        .filter(|c| !c.is_control())
-        .collect();
+    let sanitised: String = original.chars().filter(|c| !c.is_control()).collect();
     if !sanitised.is_empty() && sanitised != original {
         out.push(sanitised.clone());
     }

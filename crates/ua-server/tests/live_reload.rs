@@ -14,8 +14,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ua_core::{KnowledgeGraph, ProjectMeta};
-use ua_server::{router_for, AppState};
 use ua_server::state::ReloadEvent;
+use ua_server::{router_for, AppState};
 
 fn empty_graph(name: &str) -> KnowledgeGraph {
     KnowledgeGraph::new(ProjectMeta {
@@ -47,12 +47,10 @@ async fn boot(state: AppState) -> (String, Arc<AppState>, tokio::task::JoinHandl
 async fn first_data_line(host: &str, port: u16, timeout: Duration) -> Option<String> {
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-    let mut stream = tokio::time::timeout(
-        timeout,
-        tokio::net::TcpStream::connect((host, port)),
-    )
-    .await
-    .ok()?.ok()?;
+    let mut stream = tokio::time::timeout(timeout, tokio::net::TcpStream::connect((host, port)))
+        .await
+        .ok()?
+        .ok()?;
 
     let request = format!(
         "GET /api/events HTTP/1.1\r\nHost: {host}:{port}\r\nAccept: text/event-stream\r\nConnection: keep-alive\r\n\r\n"
@@ -101,9 +99,8 @@ async fn events_endpoint_delivers_reload_notification() {
 
     // Spawn a task that opens the SSE stream and waits for the first data line.
     let host = host.to_string();
-    let event_task = tokio::spawn(async move {
-        first_data_line(&host, port, Duration::from_secs(3)).await
-    });
+    let event_task =
+        tokio::spawn(async move { first_data_line(&host, port, Duration::from_secs(3)).await });
 
     // Let the subscriber connect before we fire.
     tokio::time::sleep(Duration::from_millis(150)).await;
