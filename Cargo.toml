@@ -52,7 +52,7 @@ clap         = { version = "4", features = ["derive", "env"] }
 indradb-lib  = "5.0.0"
 usearch      = "2.25.1"
 tar          = "0.4"
-bincode      = "1"
+bincode      = "3"
 uuid         = { version = "1", features = ["v5", "v4", "serde"] }
 rmp-serde    = "1"
 bytemuck     = "1"
