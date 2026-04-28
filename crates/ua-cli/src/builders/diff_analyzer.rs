@@ -372,10 +372,8 @@ pub(crate) fn parse_porcelain_v2(payload: &str) -> Vec<String> {
             }
             // Untracked / ignored: `? <path>` or `! <path>` — the
             // entire remainder is the path verbatim.
-            "?" | "!" => {
-                if !rest.is_empty() {
-                    files.push(rest.to_string());
-                }
+            "?" | "!" if !rest.is_empty() => {
+                files.push(rest.to_string());
             }
             // Header line ("# branch.oid ...") or anything we don't
             // recognise: skip.

@@ -979,15 +979,13 @@ impl Storage {
     }
 
     async fn serialize_graph_to_msgpack(&self) -> Result<Vec<u8>, Error> {
-        // Open a tempfile, build a fresh persisted MemoryDatastore at
-        // its path, copy every vertex / edge / property over, sync.
-        // The original DB's `path` is None so it can't sync directly.
-        let tmp = tempfile::Builder::new()
-            .prefix("ua-graph-")
-            .suffix(".msgpack")
-            .tempfile()?;
-        let path = tmp.path().to_path_buf();
-        // `tmp` keeps the file alive for our re-read.
+        // Build the persisted MemoryDatastore inside a tempdir, but
+        // point it at a path that does not exist yet. IndraDB's sync
+        // path persists a fresh temporary file to the destination;
+        // pre-creating that destination works on Unix, but fails on
+        // Windows because the destination file is already open.
+        let tmpdir = tempfile::Builder::new().prefix("ua-graph-").tempdir()?;
+        let path = tmpdir.path().join("graph.msgpack");
         let target = MemoryDatastore::create_msgpack_db(&path);
 
         // Mirror the live DB into `target`.
