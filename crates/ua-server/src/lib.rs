@@ -113,9 +113,18 @@ pub async fn serve_kind(project_root: &Path, addr: SocketAddr, kind: &str) -> an
     let app = router_for(Arc::clone(&state), addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(?addr, kind, "ua-server listening");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // Race serve against ctrl_c. We can't use `with_graceful_shutdown`
+    // here because the live-reload SSE endpoint holds long-lived
+    // connections (keep-alive every 15s) that never voluntarily close,
+    // so a graceful drain would hang forever. `tokio::select!` aborts
+    // the server task when ctrl_c fires — clients see their EventSource
+    // drop and reconnect on the next `understandable dashboard`.
+    tokio::select! {
+        res = axum::serve(listener, app) => res?,
+        _ = shutdown_signal() => {
+            tracing::info!("ua-server: ctrl_c received; aborting in-flight SSE streams");
+        }
+    }
     Ok(())
 }
 
