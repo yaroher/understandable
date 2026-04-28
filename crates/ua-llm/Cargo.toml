@@ -23,7 +23,7 @@ tokio      = { workspace = true }
 reqwest    = { workspace = true }
 async-trait = "0.1"
 secrecy    = "0.10"
-rand       = "0.9"
+rand       = "0.10"
 fastembed  = { workspace = true, optional = true }
 
 [dev-dependencies]
