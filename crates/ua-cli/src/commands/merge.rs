@@ -22,9 +22,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use clap::{Args as ClapArgs, ValueEnum};
 
-use ua_core::{
-    EdgeType, GraphEdge, GraphNode, KnowledgeGraph, Layer, TourStep, validate_graph,
-};
+use ua_core::{validate_graph, EdgeType, GraphEdge, GraphNode, KnowledgeGraph, Layer, TourStep};
 
 #[derive(Copy, Clone, Debug, ValueEnum, PartialEq, Eq)]
 pub enum MergeKind {
@@ -60,10 +58,14 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     // ── Load each input ──────────────────────────────────────────────
     let mut graphs: Vec<KnowledgeGraph> = Vec::with_capacity(args.inputs.len());
     for path in &args.inputs {
-        let bytes = fs::read(path)
-            .with_context(|| format!("merge: failed to read {}", path.display()))?;
-        let graph: KnowledgeGraph = serde_json::from_slice(&bytes)
-            .with_context(|| format!("merge: failed to parse {} as KnowledgeGraph", path.display()))?;
+        let bytes =
+            fs::read(path).with_context(|| format!("merge: failed to read {}", path.display()))?;
+        let graph: KnowledgeGraph = serde_json::from_slice(&bytes).with_context(|| {
+            format!(
+                "merge: failed to parse {} as KnowledgeGraph",
+                path.display()
+            )
+        })?;
         graphs.push(graph);
     }
 
@@ -95,8 +97,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     };
 
     // ── Serialize + atomic write ─────────────────────────────────────
-    let body = serde_json::to_string_pretty(&graph)
-        .context("merge: failed to serialize merged graph")?;
+    let body =
+        serde_json::to_string_pretty(&graph).context("merge: failed to serialize merged graph")?;
     atomic_write(&out_path, body.as_bytes())
         .with_context(|| format!("merge: failed to write {}", out_path.display()))?;
 
@@ -293,8 +295,8 @@ fn merge_graphs(
         edges_by_key
             .into_values()
             .filter(|e| {
-                let ok = node_ids.contains(e.source.as_str())
-                    && node_ids.contains(e.target.as_str());
+                let ok =
+                    node_ids.contains(e.source.as_str()) && node_ids.contains(e.target.as_str());
                 if !ok {
                     dropped_dangling += 1;
                 }
@@ -436,15 +438,13 @@ fn sync_parent_dir(_parent: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ua_core::{
-        Complexity, EdgeDirection, EdgeType, GraphKind, NodeType, ProjectMeta,
-    };
+    use ua_core::{Complexity, EdgeDirection, EdgeType, GraphKind, NodeType, ProjectMeta};
 
     fn node(id: &str, ty: NodeType, summary: &str, tags: &[&str]) -> GraphNode {
         GraphNode {
             id: id.to_string(),
             node_type: ty,
-            name: id.split(':').last().unwrap_or(id).to_string(),
+            name: id.split(':').next_back().unwrap_or(id).to_string(),
             file_path: None,
             line_range: None,
             summary: summary.to_string(),
@@ -488,14 +488,8 @@ mod tests {
 
     #[test]
     fn merge_two_disjoint_graphs_produces_union() {
-        let g1 = graph_of(
-            vec![node("file:a", NodeType::File, "a", &[])],
-            vec![],
-        );
-        let g2 = graph_of(
-            vec![node("file:b", NodeType::File, "b", &[])],
-            vec![],
-        );
+        let g1 = graph_of(vec![node("file:a", NodeType::File, "a", &[])], vec![]);
+        let g2 = graph_of(vec![node("file:b", NodeType::File, "b", &[])], vec![]);
 
         let out = merge_graphs(vec![g1, g2], true, false);
         assert_eq!(out.graph.nodes.len(), 2);
@@ -568,7 +562,12 @@ mod tests {
     #[test]
     fn id_normalisation_collision_prefers_longer_summary() {
         let a = node("FILE:src/a.rs", NodeType::File, "short", &[]);
-        let mut b = node("file:src/a.rs", NodeType::File, "this is a far longer summary", &[]);
+        let mut b = node(
+            "file:src/a.rs",
+            NodeType::File,
+            "this is a far longer summary",
+            &[],
+        );
         b.name = "winner".to_string();
 
         let g = graph_of(vec![a, b], vec![]);
@@ -675,8 +674,7 @@ mod tests {
         let merged: KnowledgeGraph = serde_json::from_str(&body).unwrap();
         assert_eq!(merged.nodes.len(), 2);
         assert_eq!(merged.edges.len(), 1);
-        let mut summaries: Vec<&str> =
-            merged.nodes.iter().map(|n| n.summary.as_str()).collect();
+        let mut summaries: Vec<&str> = merged.nodes.iter().map(|n| n.summary.as_str()).collect();
         summaries.sort();
         assert_eq!(summaries, vec!["a-newer", "b"]);
     }

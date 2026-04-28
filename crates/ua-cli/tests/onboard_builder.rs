@@ -9,8 +9,8 @@
 mod onboard_builder;
 
 use ua_core::{
-    Complexity, GraphEdge, GraphNode, GraphKind, KnowledgeGraph, Layer, NodeType,
-    ProjectMeta, TourStep,
+    Complexity, GraphEdge, GraphKind, GraphNode, KnowledgeGraph, Layer, NodeType, ProjectMeta,
+    TourStep,
 };
 
 fn file_node(id: &str, path: &str, name: &str, summary: &str, complexity: Complexity) -> GraphNode {
@@ -115,7 +115,10 @@ fn onboard_md_contains_expected_sections() {
     let md = onboard_builder::build_onboarding_guide(&g);
 
     // Top-level project header.
-    assert!(md.starts_with("# demo"), "doc starts with project name: {md}");
+    assert!(
+        md.starts_with("# demo"),
+        "doc starts with project name: {md}"
+    );
 
     // Required sections — the builder emits these as h2/h3 headers.
     for header in [

@@ -3,9 +3,7 @@
 //! else intact. Mirrors what the `analyze --incremental` pipeline does
 //! when files vanish from the working tree.
 
-use ua_core::{
-    Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-};
+use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
 use ua_persist::Storage;
 
 fn graph_with_three_files() -> KnowledgeGraph {
@@ -50,12 +48,22 @@ async fn forget_embeddings_drops_only_named_nodes() {
     s.save_graph(&graph_with_three_files()).await.unwrap();
     s.ensure_embeddings_table("test-model", 4).await.unwrap();
 
-    s.upsert_node_embedding("file:src/keep.rs", "test-model", &[1.0, 0.0, 0.0, 0.0], "h-keep")
-        .await
-        .unwrap();
-    s.upsert_node_embedding("file:src/drop.rs", "test-model", &[0.0, 1.0, 0.0, 0.0], "h-drop")
-        .await
-        .unwrap();
+    s.upsert_node_embedding(
+        "file:src/keep.rs",
+        "test-model",
+        &[1.0, 0.0, 0.0, 0.0],
+        "h-keep",
+    )
+    .await
+    .unwrap();
+    s.upsert_node_embedding(
+        "file:src/drop.rs",
+        "test-model",
+        &[0.0, 1.0, 0.0, 0.0],
+        "h-drop",
+    )
+    .await
+    .unwrap();
     s.upsert_node_embedding(
         "file:src/also_keep.rs",
         "test-model",

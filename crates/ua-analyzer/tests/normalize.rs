@@ -1,9 +1,11 @@
 use serde_json::{json, Map, Value};
-use ua_analyzer::{
-    normalize_batch_output, normalize_complexity, normalize_node_id, DropReason,
-};
+use ua_analyzer::{normalize_batch_output, normalize_complexity, normalize_node_id, DropReason};
 
-fn ctx<'a>(node_type: &'a str, file_path: Option<&'a str>, name: Option<&'a str>) -> ua_analyzer::normalize::NormalizeContext<'a> {
+fn ctx<'a>(
+    node_type: &'a str,
+    file_path: Option<&'a str>,
+    name: Option<&'a str>,
+) -> ua_analyzer::normalize::NormalizeContext<'a> {
     ua_analyzer::normalize::NormalizeContext {
         node_type,
         file_path,
@@ -57,13 +59,25 @@ fn bare_path_is_reconstructed() {
 
 #[test]
 fn complexity_aliases_normalise() {
-    assert_eq!(normalize_complexity(&Value::String("trivial".into())), "simple");
-    assert_eq!(normalize_complexity(&Value::String("Hard".into())), "complex");
-    assert_eq!(normalize_complexity(&Value::String("medium".into())), "moderate");
+    assert_eq!(
+        normalize_complexity(&Value::String("trivial".into())),
+        "simple"
+    );
+    assert_eq!(
+        normalize_complexity(&Value::String("Hard".into())),
+        "complex"
+    );
+    assert_eq!(
+        normalize_complexity(&Value::String("medium".into())),
+        "moderate"
+    );
     assert_eq!(normalize_complexity(&json!(2)), "simple");
     assert_eq!(normalize_complexity(&json!(5)), "moderate");
     assert_eq!(normalize_complexity(&json!(9)), "complex");
-    assert_eq!(normalize_complexity(&Value::String("???".into())), "moderate");
+    assert_eq!(
+        normalize_complexity(&Value::String("???".into())),
+        "moderate"
+    );
 }
 
 #[test]
@@ -142,10 +156,7 @@ fn complexity_unknown_string_falls_back_to_moderate() {
         normalize_complexity(&Value::String("no idea".into())),
         "moderate"
     );
-    assert_eq!(
-        normalize_complexity(&Value::String("".into())),
-        "moderate"
-    );
+    assert_eq!(normalize_complexity(&Value::String("".into())), "moderate");
     assert_eq!(
         normalize_complexity(&Value::String("nightmare".into())),
         "moderate"
@@ -194,7 +205,10 @@ fn batch_drops_dangling_edge_with_reason() {
     let result = normalize_batch_output(nodes, edges);
     assert_eq!(result.edges.len(), 0);
     assert_eq!(result.stats.dangling_edges_dropped, 1);
-    assert_eq!(result.stats.dropped_edges[0].reason, DropReason::MissingTarget);
+    assert_eq!(
+        result.stats.dropped_edges[0].reason,
+        DropReason::MissingTarget
+    );
 }
 
 #[test]
@@ -240,12 +254,20 @@ fn batch_rewrites_edges_after_id_fix() {
 #[test]
 fn batch_dedups_identical_edges() {
     let nodes = vec![
-        obj(json!({"id":"file:a.ts","type":"file","name":"a","summary":"","tags":[],"complexity":"simple"})),
-        obj(json!({"id":"file:b.ts","type":"file","name":"b","summary":"","tags":[],"complexity":"simple"})),
+        obj(
+            json!({"id":"file:a.ts","type":"file","name":"a","summary":"","tags":[],"complexity":"simple"}),
+        ),
+        obj(
+            json!({"id":"file:b.ts","type":"file","name":"b","summary":"","tags":[],"complexity":"simple"}),
+        ),
     ];
     let edges = vec![
-        obj(json!({"source":"file:a.ts","target":"file:b.ts","type":"imports","direction":"forward","weight":0.7})),
-        obj(json!({"source":"file:a.ts","target":"file:b.ts","type":"imports","direction":"forward","weight":0.7})),
+        obj(
+            json!({"source":"file:a.ts","target":"file:b.ts","type":"imports","direction":"forward","weight":0.7}),
+        ),
+        obj(
+            json!({"source":"file:a.ts","target":"file:b.ts","type":"imports","direction":"forward","weight":0.7}),
+        ),
     ];
     let result = normalize_batch_output(nodes, edges);
     assert_eq!(result.edges.len(), 1);

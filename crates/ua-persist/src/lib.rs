@@ -31,15 +31,14 @@ pub mod layout;
 pub mod staleness;
 pub mod storage;
 
-pub use archive::{ZSTD_LEVEL, UNDERSTANDABLE_SCHEMA_VERSION};
-pub use fingerprint::{Fingerprint, blake3_file, blake3_string};
+pub use archive::{UNDERSTANDABLE_SCHEMA_VERSION, ZSTD_LEVEL};
+pub use fingerprint::{blake3_file, blake3_string, Fingerprint};
 pub use gitignore::{apply_block, render_block, GitignoreOutcome, GitignorePolicy};
-pub use ignore_filter::{IgnoreFilter, walk_project};
+pub use ignore_filter::{walk_project, IgnoreFilter};
 pub use layout::ProjectLayout;
 pub use staleness::{StalenessReport, StalenessStatus};
 pub use storage::{
-    uuid_for_key, EmbeddingBatchRow, LlmCacheEntry, LlmCacheKey, LlmOutputCache, Storage,
-    VectorHit,
+    uuid_for_key, EmbeddingBatchRow, LlmCacheEntry, LlmCacheKey, LlmOutputCache, Storage, VectorHit,
 };
 
 /// Re-export the workspace-wide error so callers don't have to depend
@@ -48,5 +47,8 @@ pub use ua_core::Error;
 
 /// Deprecated alias for [`ua_core::Error`]. Old callers that imported
 /// `ua_persist::StorageError` keep compiling.
-#[deprecated(since = "0.2.0", note = "use `ua_persist::Error` (re-exported from `ua_core`)")]
+#[deprecated(
+    since = "0.2.0",
+    note = "use `ua_persist::Error` (re-exported from `ua_core`)"
+)]
 pub type StorageError = ua_core::Error;

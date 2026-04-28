@@ -31,7 +31,13 @@ pub fn build_onboarding_guide(graph: &KnowledgeGraph) -> String {
             let names: Vec<&str> = l
                 .node_ids
                 .iter()
-                .filter_map(|id| graph.nodes.iter().find(|n| &n.id == id).map(|n| n.name.as_str()))
+                .filter_map(|id| {
+                    graph
+                        .nodes
+                        .iter()
+                        .find(|n| &n.id == id)
+                        .map(|n| n.name.as_str())
+                })
                 .collect();
             lines.push(format!("### {}", l.name));
             lines.push(String::new());

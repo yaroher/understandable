@@ -67,9 +67,17 @@ EMPTY=
     let defs = a.definitions.unwrap();
     let by_name: std::collections::HashMap<&str, &str> = defs
         .iter()
-        .map(|d| (d.name.as_str(), d.fields.first().map(|s| s.as_str()).unwrap_or("")))
+        .map(|d| {
+            (
+                d.name.as_str(),
+                d.fields.first().map(|s| s.as_str()).unwrap_or(""),
+            )
+        })
         .collect();
-    assert_eq!(by_name.get("DB_URL").copied(), Some("postgres://localhost/foo"));
+    assert_eq!(
+        by_name.get("DB_URL").copied(),
+        Some("postgres://localhost/foo")
+    );
     assert_eq!(by_name.get("DB_POOL").copied(), Some("5"));
     assert_eq!(by_name.get("API_KEY").copied(), Some("secret-value"));
     assert_eq!(by_name.get("EMPTY").copied(), Some(""));
@@ -96,7 +104,13 @@ url = sqlite:///data.db
         .collect();
     assert_eq!(sections, vec!["server", "database"]);
     let host = defs.iter().find(|d| d.name == "host").unwrap();
-    assert_eq!(host.fields, vec!["server".to_string(), "127.0.0.1".to_string()]);
+    assert_eq!(
+        host.fields,
+        vec!["server".to_string(), "127.0.0.1".to_string()]
+    );
     let url = defs.iter().find(|d| d.name == "url").unwrap();
-    assert_eq!(url.fields, vec!["database".to_string(), "sqlite:///data.db".to_string()]);
+    assert_eq!(
+        url.fields,
+        vec!["database".to_string(), "sqlite:///data.db".to_string()]
+    );
 }

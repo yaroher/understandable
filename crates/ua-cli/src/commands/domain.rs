@@ -20,9 +20,7 @@ pub async fn run(_args: Args, project: &Path) -> anyhow::Result<()> {
     let codebase = Storage::open_kind(&layout, "codebase").await?;
     let codebase_graph = codebase.load_graph().await?;
     if codebase_graph.nodes.is_empty() {
-        anyhow::bail!(
-            "no codebase graph found — run `understandable analyze` first"
-        );
+        anyhow::bail!("no codebase graph found — run `understandable analyze` first");
     }
     let domain_graph = build_domain_graph(&codebase_graph);
     let storage = Storage::open_kind(&layout, "domain").await?;

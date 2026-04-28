@@ -62,7 +62,11 @@ fn atomic_write_stale_tmp_does_not_block_subsequent_save() {
     let tmp = tmp_for(&dst);
 
     // Crash residue.
-    std::fs::write(&tmp, b"NOT A VALID ZSTD STREAM, leftover from a crashed save").unwrap();
+    std::fs::write(
+        &tmp,
+        b"NOT A VALID ZSTD STREAM, leftover from a crashed save",
+    )
+    .unwrap();
     assert!(tmp.exists());
 
     // Now do a real save; the stale tmp must be overwritten by the
@@ -90,7 +94,10 @@ fn atomic_write_stale_tmp_does_not_block_subsequent_save() {
     // logic).
     archive::write_archive(
         &dst,
-        vec![("meta.json".to_string(), b"{\"schema_version\":3,\"v\":2}".to_vec())],
+        vec![(
+            "meta.json".to_string(),
+            b"{\"schema_version\":3,\"v\":2}".to_vec(),
+        )],
     )
     .unwrap();
     assert!(!tmp.exists());

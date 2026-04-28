@@ -195,11 +195,7 @@ pub struct GraphBuilder {
 
 impl GraphBuilder {
     pub fn new(project_name: impl Into<String>, git_hash: impl Into<String>) -> Self {
-        Self::with_registry(
-            project_name,
-            git_hash,
-            LanguageRegistry::default_registry(),
-        )
+        Self::with_registry(project_name, git_hash, LanguageRegistry::default_registry())
     }
 
     pub fn with_registry(

@@ -24,7 +24,12 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
         if let Some(rest) = line.strip_prefix("[[") {
             if let Some(name) = rest.strip_suffix("]]") {
                 let name = name.trim().to_string();
-                defs.push(def_with_fields(name.clone(), "section", line_no, Vec::new()));
+                defs.push(def_with_fields(
+                    name.clone(),
+                    "section",
+                    line_no,
+                    Vec::new(),
+                ));
                 current_section = Some(name);
                 continue;
             }
@@ -33,7 +38,12 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
         if let Some(rest) = line.strip_prefix('[') {
             if let Some(name) = rest.strip_suffix(']') {
                 let name = name.trim().to_string();
-                defs.push(def_with_fields(name.clone(), "section", line_no, Vec::new()));
+                defs.push(def_with_fields(
+                    name.clone(),
+                    "section",
+                    line_no,
+                    Vec::new(),
+                ));
                 current_section = Some(name);
                 continue;
             }
@@ -167,6 +177,7 @@ name = "alice"
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_toml_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

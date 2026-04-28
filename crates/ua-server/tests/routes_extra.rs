@@ -124,17 +124,10 @@ async fn test_health_returns_version() {
 
 #[tokio::test]
 async fn test_project_returns_meta() {
-    let state = AppState::with_graphs(
-        empty_graph("fixture-project"),
-        None,
-        None,
-        PathBuf::new(),
-    );
+    let state = AppState::with_graphs(empty_graph("fixture-project"), None, None, PathBuf::new());
     let (base, handle) = boot_with(state).await;
 
-    let resp = reqwest::get(format!("{base}/api/project"))
-        .await
-        .unwrap();
+    let resp = reqwest::get(format!("{base}/api/project")).await.unwrap();
     assert_eq!(resp.status(), reqwest::StatusCode::OK);
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["name"], "fixture-project");
@@ -149,9 +142,7 @@ async fn test_layers_returns_array() {
     let state = AppState::with_graphs(populated_graph("p"), None, None, PathBuf::new());
     let (base, handle) = boot_with(state).await;
 
-    let resp = reqwest::get(format!("{base}/api/layers"))
-        .await
-        .unwrap();
+    let resp = reqwest::get(format!("{base}/api/layers")).await.unwrap();
     assert_eq!(resp.status(), reqwest::StatusCode::OK);
     let body: serde_json::Value = resp.json().await.unwrap();
     let arr = body.as_array().expect("layers must be a JSON array");
@@ -276,10 +267,7 @@ async fn test_neighbors_returns_subgraph() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["center"]["id"], "alpha");
     let neighbors = body["neighbors"].as_array().unwrap();
-    let neighbor_ids: Vec<&str> = neighbors
-        .iter()
-        .filter_map(|n| n["id"].as_str())
-        .collect();
+    let neighbor_ids: Vec<&str> = neighbors.iter().filter_map(|n| n["id"].as_str()).collect();
     assert_eq!(neighbor_ids, vec!["beta"]);
     let edges = body["edges"].as_array().unwrap();
     assert_eq!(edges.len(), 1);

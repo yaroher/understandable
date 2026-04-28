@@ -19,27 +19,9 @@ use std::collections::{HashMap, HashSet};
 use serde_json::{Map, Value};
 
 const VALID_PREFIXES: &[&str] = &[
-    "file",
-    "function",
-    "func", // legacy short form — accepted, normalized to "function"
-    "class",
-    "module",
-    "concept",
-    "config",
-    "document",
-    "service",
-    "table",
-    "endpoint",
-    "pipeline",
-    "schema",
-    "resource",
-    "domain",
-    "flow",
-    "step",
-    "article",
-    "entity",
-    "topic",
-    "claim",
+    "file", "function", "func", // legacy short form — accepted, normalized to "function"
+    "class", "module", "concept", "config", "document", "service", "table", "endpoint", "pipeline",
+    "schema", "resource", "domain", "flow", "step", "article", "entity", "topic", "claim",
     "source",
 ];
 
@@ -131,7 +113,11 @@ pub fn normalize_node_id(id: &str, ctx: NormalizeContext<'_>) -> String {
             if let Some(file_path) = ctx.file_path {
                 let segs: Vec<&str> = path.split(':').collect();
                 let step_slug = segs.last().copied().unwrap_or(path);
-                let flow_slug = if segs.len() > 1 { segs[segs.len() - 2] } else { "" };
+                let flow_slug = if segs.len() > 1 {
+                    segs[segs.len() - 2]
+                } else {
+                    ""
+                };
                 if !flow_slug.is_empty() {
                     return format!("{canonical}:{flow_slug}:{file_path}:{step_slug}");
                 }

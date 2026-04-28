@@ -65,9 +65,11 @@ fn cors_for(bind_addr: Option<SocketAddr>) -> CorsLayer {
             }
         }
     }
-    CorsLayer::new()
-        .allow_origin(origins)
-        .allow_methods([Method::GET, Method::HEAD, Method::OPTIONS])
+    CorsLayer::new().allow_origin(origins).allow_methods([
+        Method::GET,
+        Method::HEAD,
+        Method::OPTIONS,
+    ])
 }
 
 fn is_loopback(ip: IpAddr) -> bool {
@@ -92,11 +94,7 @@ pub async fn serve(project_root: &Path, addr: SocketAddr) -> anyhow::Result<()> 
 /// `"knowledge"`) as the primary graph backing `state.graph` and the
 /// search index. The other two kinds are still loaded into their
 /// optional overlay slots when their archives exist on disk.
-pub async fn serve_kind(
-    project_root: &Path,
-    addr: SocketAddr,
-    kind: &str,
-) -> anyhow::Result<()> {
+pub async fn serve_kind(project_root: &Path, addr: SocketAddr, kind: &str) -> anyhow::Result<()> {
     let state = AppState::load_from_project_kind(project_root, kind)
         .await
         .with_context(|| format!("loading project graphs (kind={kind})"))?;

@@ -10,9 +10,7 @@
 //! These tests would have caught the double-flush regression, where a
 //! removed `close` left a stray `.tmp` after the explicit `save`.
 
-use ua_core::{
-    Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-};
+use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
 use ua_persist::{ProjectLayout, Storage};
 
 fn tiny_graph(name: &str) -> KnowledgeGraph {
@@ -64,9 +62,8 @@ async fn drop_after_save_is_clean() {
         let s = Storage::open(&layout).await.unwrap();
         s.save_graph(&tiny_graph("alpha")).await.unwrap();
         s.save(&layout).await.unwrap();
-        let bytes = std::fs::read(layout.graph_archive()).unwrap();
         // Drop happens at the end of this scope.
-        bytes
+        std::fs::read(layout.graph_archive()).unwrap()
     };
     assert!(!archive_bytes.is_empty(), "archive must have content");
 

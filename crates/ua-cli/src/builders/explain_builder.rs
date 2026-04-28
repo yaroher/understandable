@@ -119,7 +119,8 @@ pub fn format_explain_prompt(ctx: &ExplainContext) -> String {
             ),
             String::new(),
             "Possible reasons:".into(),
-            "- The file hasn't been analyzed yet — try running `understandable analyze` first".into(),
+            "- The file hasn't been analyzed yet — try running `understandable analyze` first"
+                .into(),
             "- The path may be different in the graph — check the exact file path".into(),
             "- The file may have been deleted or renamed since the last analysis".into(),
         ]
@@ -195,10 +196,7 @@ pub fn format_explain_prompt(ctx: &ExplainContext) -> String {
                 .get(e.target.as_str())
                 .map(|n| n.name.as_str())
                 .unwrap_or(&e.target);
-            let mut line = format!(
-                "- {src} --[{}]--> {tgt}",
-                edge_type_label(e.edge_type)
-            );
+            let mut line = format!("- {src} --[{}]--> {tgt}", edge_type_label(e.edge_type));
             if let Some(d) = &e.description {
                 line.push_str(" — ");
                 line.push_str(d);

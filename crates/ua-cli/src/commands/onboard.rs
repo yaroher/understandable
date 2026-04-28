@@ -19,7 +19,7 @@ pub async fn run(args: Args, project: &Path) -> anyhow::Result<()> {
     let storage = Storage::open(&layout).await?;
     let graph = storage.load_graph().await?;
     let md = build_onboarding_guide(&graph);
-    if args.out == PathBuf::from("-") {
+    if args.out == std::path::Path::new("-") {
         println!("{md}");
     } else {
         std::fs::write(&args.out, md)?;

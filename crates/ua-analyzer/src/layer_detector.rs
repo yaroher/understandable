@@ -45,7 +45,13 @@ const LAYER_PATTERNS: &[LayerPattern] = &[
     },
     LayerPattern {
         patterns: &[
-            "component", "view", "page", "screen", "layout", "widget", "ui",
+            "component",
+            "view",
+            "page",
+            "screen",
+            "layout",
+            "widget",
+            "ui",
         ],
         layer_name: "UI Layer",
         description: "User interface components and views",
@@ -214,7 +220,9 @@ pub fn parse_layer_detection_response(response: &str) -> Option<Vec<LlmLayerResp
     let parsed: Vec<serde_json::Value> = serde_json::from_str(array_str).ok()?;
     let mut out = Vec::new();
     for item in parsed {
-        let Some(obj) = item.as_object() else { continue };
+        let Some(obj) = item.as_object() else {
+            continue;
+        };
         let Some(name) = obj.get("name").and_then(|v| v.as_str()) else {
             continue;
         };
@@ -248,10 +256,18 @@ pub fn parse_layer_detection_response(response: &str) -> Option<Vec<LlmLayerResp
 fn strip_code_fence(s: &str) -> &str {
     let s = s.trim();
     if let Some(after) = s.strip_prefix("```json") {
-        return after.trim_start_matches('\n').trim().trim_end_matches("```").trim();
+        return after
+            .trim_start_matches('\n')
+            .trim()
+            .trim_end_matches("```")
+            .trim();
     }
     if let Some(after) = s.strip_prefix("```") {
-        return after.trim_start_matches('\n').trim().trim_end_matches("```").trim();
+        return after
+            .trim_start_matches('\n')
+            .trim()
+            .trim_end_matches("```")
+            .trim();
     }
     s
 }

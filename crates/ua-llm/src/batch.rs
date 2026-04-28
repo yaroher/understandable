@@ -225,10 +225,7 @@ impl BatchClient {
 
     /// Submit a batch. The returned [`BatchSubmitResponse::id`] is the
     /// handle for [`Self::status`] / [`Self::wait_until_done`].
-    pub async fn submit(
-        &self,
-        requests: Vec<BatchRequest>,
-    ) -> Result<BatchSubmitResponse, Error> {
+    pub async fn submit(&self, requests: Vec<BatchRequest>) -> Result<BatchSubmitResponse, Error> {
         if requests.is_empty() {
             return Err(Error::Anthropic("submit: empty batch".into()));
         }
@@ -456,9 +453,8 @@ fn parse_jsonl(body: &str) -> Result<Vec<BatchResultLine>, Error> {
         if trimmed.is_empty() {
             continue;
         }
-        let parsed: BatchResultLine = serde_json::from_str(trimmed).map_err(|e| {
-            Error::Anthropic(format!("batch results: parse line {idx}: {e}"))
-        })?;
+        let parsed: BatchResultLine = serde_json::from_str(trimmed)
+            .map_err(|e| Error::Anthropic(format!("batch results: parse line {idx}: {e}")))?;
         out.push(parsed);
     }
     Ok(out)
@@ -494,10 +490,9 @@ async fn stream_jsonl(mut res: reqwest::Response) -> Result<Vec<BatchResultLine>
         while let Some(nl) = buf.find('\n') {
             let line = buf[..nl].trim();
             if !line.is_empty() {
-                let parsed: BatchResultLine =
-                    serde_json::from_str(line).map_err(|e| {
-                        Error::Anthropic(format!("batch results: parse line {line_idx}: {e}"))
-                    })?;
+                let parsed: BatchResultLine = serde_json::from_str(line).map_err(|e| {
+                    Error::Anthropic(format!("batch results: parse line {line_idx}: {e}"))
+                })?;
                 out.push(parsed);
             }
             line_idx += 1;
@@ -508,9 +503,8 @@ async fn stream_jsonl(mut res: reqwest::Response) -> Result<Vec<BatchResultLine>
     // Tail: a final line without a trailing newline is still valid.
     let tail = buf.trim();
     if !tail.is_empty() {
-        let parsed: BatchResultLine = serde_json::from_str(tail).map_err(|e| {
-            Error::Anthropic(format!("batch results: parse line {line_idx}: {e}"))
-        })?;
+        let parsed: BatchResultLine = serde_json::from_str(tail)
+            .map_err(|e| Error::Anthropic(format!("batch results: parse line {line_idx}: {e}")))?;
         out.push(parsed);
     }
     Ok(out)
@@ -656,10 +650,7 @@ mod tests {
                 request_counts: BatchCounts::default(),
                 results_url: None,
             };
-            assert!(
-                !snap.is_done(),
-                "status {status:?} should NOT be terminal"
-            );
+            assert!(!snap.is_done(), "status {status:?} should NOT be terminal");
         }
     }
 
@@ -672,13 +663,13 @@ mod tests {
         let server = wiremock::MockServer::start().await;
         wiremock::Mock::given(wiremock::matchers::method("GET"))
             .and(wiremock::matchers::path("/v1/messages/batches/msgbatch_x"))
-            .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(
-                serde_json::json!({
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
                     "id": "msgbatch_x",
                     "processing_status": "in_progress",
                     "created_at": "2026-01-01T00:00:00Z"
-                }),
-            ))
+                })),
+            )
             .mount(&server)
             .await;
 
@@ -710,25 +701,25 @@ mod tests {
         let server = wiremock::MockServer::start().await;
         wiremock::Mock::given(wiremock::matchers::method("GET"))
             .and(wiremock::matchers::path("/v1/messages/batches/msgbatch_y"))
-            .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(
-                serde_json::json!({
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
                     "id": "msgbatch_y",
                     "processing_status": "in_progress",
                     "created_at": "2026-01-01T00:00:00Z"
-                }),
-            ))
+                })),
+            )
             .up_to_n_times(1)
             .mount(&server)
             .await;
         wiremock::Mock::given(wiremock::matchers::method("GET"))
             .and(wiremock::matchers::path("/v1/messages/batches/msgbatch_y"))
-            .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(
-                serde_json::json!({
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
                     "id": "msgbatch_y",
                     "processing_status": "failed",
                     "created_at": "2026-01-01T00:00:00Z"
-                }),
-            ))
+                })),
+            )
             .mount(&server)
             .await;
 

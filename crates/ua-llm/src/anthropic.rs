@@ -134,10 +134,7 @@ impl AnthropicClient {
     /// numbers reported by the API (input, output, cache creation, cache
     /// read). Use this when you need to track caching efficiency or
     /// settle a per-call cost budget.
-    pub async fn complete_with_usage(
-        &self,
-        req: CompleteRequest,
-    ) -> Result<CompleteResult, Error> {
+    pub async fn complete_with_usage(&self, req: CompleteRequest) -> Result<CompleteResult, Error> {
         let cache_system = req.cache_system;
         let body = build_api_request(&req);
         let url = format!("{}/v1/messages", self.base_url);

@@ -5,9 +5,7 @@
 //! changes on disk. These tests pin both the in-memory semantics and
 //! the round-trip through `tar.zst`.
 
-use ua_core::{
-    Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-};
+use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
 use ua_persist::{ProjectLayout, Storage};
 
 fn empty_graph() -> KnowledgeGraph {
@@ -44,9 +42,14 @@ fn empty_graph() -> KnowledgeGraph {
 #[tokio::test(flavor = "current_thread")]
 async fn cache_hit_returns_cached_response() {
     let s = Storage::open_fresh().await.unwrap();
-    s.cache_llm_output("file:src/auth.rs", "prompt-h1", "file-h1", "{\"summary\":\"ok\"}")
-        .await
-        .unwrap();
+    s.cache_llm_output(
+        "file:src/auth.rs",
+        "prompt-h1",
+        "file-h1",
+        "{\"summary\":\"ok\"}",
+    )
+    .await
+    .unwrap();
 
     let hit = s
         .llm_output_for("file:src/auth.rs", "prompt-h1", "file-h1")

@@ -35,7 +35,12 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
         if let Some(open) = trimmed.find("()") {
             let head = &trimmed[..open];
             if !head.is_empty() && head.chars().all(is_ident_char) {
-                defs.push(def_with_fields(head.to_string(), "function", line_no, Vec::new()));
+                defs.push(def_with_fields(
+                    head.to_string(),
+                    "function",
+                    line_no,
+                    Vec::new(),
+                ));
                 continue;
             }
         }
@@ -175,6 +180,7 @@ source ./lib/common.sh
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_shell_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

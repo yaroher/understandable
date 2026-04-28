@@ -51,7 +51,8 @@ impl LanguageRegistry {
             self.by_extension.insert(key, cfg.id.clone());
         }
         for fname in &cfg.filenames {
-            self.by_filename.insert(fname.to_lowercase(), cfg.id.clone());
+            self.by_filename
+                .insert(fname.to_lowercase(), cfg.id.clone());
         }
         self.by_id.insert(cfg.id.clone(), cfg);
     }
@@ -130,7 +131,12 @@ fn builtin_configs() -> Vec<LanguageConfig> {
             "Python",
             &["py", "pyi", "pyw"],
             &[],
-            &["decorators", "context-managers", "generators", "duck-typing"],
+            &[
+                "decorators",
+                "context-managers",
+                "generators",
+                "duck-typing",
+            ],
             true,
         ),
         lc(
@@ -202,7 +208,13 @@ fn builtin_configs() -> Vec<LanguageConfig> {
             "env",
             "dotenv",
             &["env"],
-            &[".env", ".env.local", ".env.example", ".env.production", ".env.development"],
+            &[
+                ".env",
+                ".env.local",
+                ".env.example",
+                ".env.production",
+                ".env.development",
+            ],
             &[],
             false,
         ),
@@ -228,19 +240,19 @@ fn builtin_configs() -> Vec<LanguageConfig> {
         ),
         lc("markdown", "Markdown", &["md", "mdx"], &[], &[], false),
         lc("html", "HTML", &["html", "htm"], &[], &[], false),
-        lc("css", "CSS", &["css", "scss", "sass", "less"], &[], &[], false),
-        lc("shell", "Shell", &["sh", "bash", "zsh"], &[], &[], false),
-        lc("sql", "SQL", &["sql"], &[], &[], false),
-        lc("graphql", "GraphQL", &["graphql", "gql"], &[], &[], false),
-        lc("protobuf", "Protocol Buffers", &["proto"], &[], &[], false),
         lc(
-            "terraform",
-            "Terraform",
-            &["tf", "tfvars"],
+            "css",
+            "CSS",
+            &["css", "scss", "sass", "less"],
             &[],
             &[],
             false,
         ),
+        lc("shell", "Shell", &["sh", "bash", "zsh"], &[], &[], false),
+        lc("sql", "SQL", &["sql"], &[], &[], false),
+        lc("graphql", "GraphQL", &["graphql", "gql"], &[], &[], false),
+        lc("protobuf", "Protocol Buffers", &["proto"], &[], &[], false),
+        lc("terraform", "Terraform", &["tf", "tfvars"], &[], &[], false),
     ]
 }
 

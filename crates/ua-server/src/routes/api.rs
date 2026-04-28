@@ -40,15 +40,14 @@ pub struct KindQuery {
     pub kind: Option<String>,
 }
 
+#[allow(clippy::result_large_err)]
 fn parse_kind(raw: Option<&str>) -> Result<GraphKind, Response> {
     let s = raw.unwrap_or("codebase").trim();
     match GraphKind::from_query(s) {
         Some(k) => Ok(k),
         None => Err((
             StatusCode::BAD_REQUEST,
-            format!(
-                "unknown kind '{s}'; expected one of: codebase, domain, knowledge"
-            ),
+            format!("unknown kind '{s}'; expected one of: codebase, domain, knowledge"),
         )
             .into_response()),
     }
@@ -56,10 +55,8 @@ fn parse_kind(raw: Option<&str>) -> Result<GraphKind, Response> {
 
 /// Resolve the requested kind to a cached graph. Returns 404 with a
 /// descriptive message when the kind has no graph loaded.
-fn graph_for_kind<'a>(
-    state: &'a AppState,
-    raw: Option<&str>,
-) -> Result<Arc<KnowledgeGraph>, Response> {
+#[allow(clippy::result_large_err)]
+fn graph_for_kind(state: &AppState, raw: Option<&str>) -> Result<Arc<KnowledgeGraph>, Response> {
     let kind = parse_kind(raw)?;
     state.graph_for(kind).ok_or_else(|| {
         (
@@ -78,10 +75,7 @@ fn graph_for_kind<'a>(
     })
 }
 
-async fn full_graph(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<KindQuery>,
-) -> Response {
+async fn full_graph(State(state): State<Arc<AppState>>, Query(q): Query<KindQuery>) -> Response {
     match graph_for_kind(&state, q.kind.as_deref()) {
         Ok(g) => Json(g.as_ref()).into_response(),
         Err(r) => r,
@@ -92,20 +86,14 @@ async fn project_meta(State(state): State<Arc<AppState>>) -> Json<ua_core::Proje
     Json(state.graph.project.clone())
 }
 
-async fn layers(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<KindQuery>,
-) -> Response {
+async fn layers(State(state): State<Arc<AppState>>, Query(q): Query<KindQuery>) -> Response {
     match graph_for_kind(&state, q.kind.as_deref()) {
         Ok(g) => Json(&g.as_ref().layers).into_response(),
         Err(r) => r,
     }
 }
 
-async fn tour(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<KindQuery>,
-) -> Response {
+async fn tour(State(state): State<Arc<AppState>>, Query(q): Query<KindQuery>) -> Response {
     match graph_for_kind(&state, q.kind.as_deref()) {
         Ok(g) => Json(&g.as_ref().tour).into_response(),
         Err(r) => r,
@@ -172,10 +160,7 @@ pub struct NodePage<'a> {
     pub meta: PageMeta,
 }
 
-async fn list_nodes(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<NodeQuery>,
-) -> Response {
+async fn list_nodes(State(state): State<Arc<AppState>>, Query(q): Query<NodeQuery>) -> Response {
     let graph = match graph_for_kind(&state, q.kind.as_deref()) {
         Ok(g) => g,
         Err(r) => return r,
@@ -249,10 +234,7 @@ pub struct EdgePage<'a> {
     pub meta: PageMeta,
 }
 
-async fn list_edges(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<EdgeQuery>,
-) -> Response {
+async fn list_edges(State(state): State<Arc<AppState>>, Query(q): Query<EdgeQuery>) -> Response {
     let graph = match graph_for_kind(&state, q.kind.as_deref()) {
         Ok(g) => g,
         Err(r) => return r,
@@ -338,10 +320,7 @@ pub struct NodeIdQuery {
     pub id: String,
 }
 
-async fn node_by_id(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<NodeIdQuery>,
-) -> Response {
+async fn node_by_id(State(state): State<Arc<AppState>>, Query(q): Query<NodeIdQuery>) -> Response {
     match state.graph.nodes.iter().find(|n| n.id == q.id) {
         Some(n) => Json(n.clone()).into_response(),
         None => (StatusCode::NOT_FOUND, "node not found").into_response(),
@@ -439,10 +418,8 @@ pub struct SourceQuery {
 /// Resolve `requested` against `root`, rejecting traversal attempts
 /// (`..`), absolute paths, and any final path that escapes the root
 /// after canonicalisation. Returns the canonical path on success.
-fn sanitize_source_path(
-    requested: &str,
-    root: &Path,
-) -> Result<std::path::PathBuf, Response> {
+#[allow(clippy::result_large_err)]
+fn sanitize_source_path(requested: &str, root: &Path) -> Result<std::path::PathBuf, Response> {
     if root.as_os_str().is_empty() {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
@@ -452,9 +429,7 @@ fn sanitize_source_path(
     }
     let trimmed = requested.trim();
     if trimmed.is_empty() {
-        return Err(
-            (StatusCode::BAD_REQUEST, "missing 'path' query parameter").into_response(),
-        );
+        return Err((StatusCode::BAD_REQUEST, "missing 'path' query parameter").into_response());
     }
     let p = Path::new(trimmed);
     // Reject any explicit traversal segment up front; even on Windows
@@ -462,24 +437,25 @@ fn sanitize_source_path(
     if p.components()
         .any(|c| matches!(c, std::path::Component::ParentDir))
     {
-        return Err(
-            (StatusCode::BAD_REQUEST, "path contains '..'; rejected").into_response(),
-        );
+        return Err((StatusCode::BAD_REQUEST, "path contains '..'; rejected").into_response());
     }
-    let joined = if p.is_absolute() { p.to_path_buf() } else { root.join(p) };
+    let joined = if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        root.join(p)
+    };
     // canonicalise — also confirms the file exists.
     let canon = match std::fs::canonicalize(&joined) {
         Ok(c) => c,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            return Err((StatusCode::NOT_FOUND, format!("file not found: {trimmed}"))
-                .into_response());
+            return Err(
+                (StatusCode::NOT_FOUND, format!("file not found: {trimmed}")).into_response(),
+            );
         }
         Err(e) => {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                format!("cannot resolve path: {e}"),
-            )
-                .into_response());
+            return Err(
+                (StatusCode::BAD_REQUEST, format!("cannot resolve path: {e}")).into_response(),
+            );
         }
     };
     if !canon.starts_with(root) {
@@ -528,11 +504,7 @@ async fn get_source(
         }
     };
     if content.len() > MAX_SOURCE_BYTES {
-        return (
-            StatusCode::PAYLOAD_TOO_LARGE,
-            "source file exceeds 1MB cap",
-        )
-            .into_response();
+        return (StatusCode::PAYLOAD_TOO_LARGE, "source file exceeds 1MB cap").into_response();
     }
 
     let slice = match (params.start, params.end) {
@@ -547,7 +519,10 @@ async fn get_source(
 
     (
         StatusCode::OK,
-        [(axum::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; charset=utf-8",
+        )],
         slice,
     )
         .into_response()
@@ -560,10 +535,7 @@ fn parse_node_type(s: Option<&str>) -> Option<NodeType> {
 
 fn parse_edge_type(s: Option<&str>) -> Option<EdgeType> {
     let s = s?.trim();
-    EdgeType::ALL
-        .iter()
-        .copied()
-        .find(|t| edge_label(*t) == s)
+    EdgeType::ALL.iter().copied().find(|t| edge_label(*t) == s)
 }
 
 fn edge_label(t: EdgeType) -> &'static str {

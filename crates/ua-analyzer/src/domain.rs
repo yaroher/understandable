@@ -44,9 +44,11 @@ pub fn build_domain_graph(graph: &KnowledgeGraph) -> KnowledgeGraph {
         let domain_id = format!("domain:{domain_name}");
         let entities: Vec<String> = files
             .iter()
-            .filter_map(|n| n.file_path.as_deref().map(|p| {
-                p.rsplit('/').next().unwrap_or(p).to_string()
-            }))
+            .filter_map(|n| {
+                n.file_path
+                    .as_deref()
+                    .map(|p| p.rsplit('/').next().unwrap_or(p).to_string())
+            })
             .collect();
         nodes.push(GraphNode {
             id: domain_id.clone(),
@@ -89,7 +91,7 @@ pub fn build_domain_graph(graph: &KnowledgeGraph) -> KnowledgeGraph {
                     business_rules: None,
                     cross_domain_interactions: None,
                     entry_point: file.file_path.clone(),
-                    entry_type: entry_type.into(),
+                    entry_type,
                 }),
                 knowledge_meta: None,
             });
@@ -107,10 +109,9 @@ pub fn build_domain_graph(graph: &KnowledgeGraph) -> KnowledgeGraph {
 
             // Promote functions / classes inside the file into step nodes.
             for child in &graph.nodes {
-                let is_child_of_file = matches!(
-                    child.node_type,
-                    NodeType::Function | NodeType::Class
-                ) && child.file_path == file.file_path;
+                let is_child_of_file =
+                    matches!(child.node_type, NodeType::Function | NodeType::Class)
+                        && child.file_path == file.file_path;
                 if !is_child_of_file {
                     continue;
                 }

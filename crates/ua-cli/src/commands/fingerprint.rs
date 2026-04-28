@@ -5,9 +5,7 @@ use std::path::Path;
 
 use clap::Args as ClapArgs;
 use ua_extract::{default_registry, LanguageRegistry};
-use ua_persist::{
-    blake3_file, walk_project, Fingerprint, IgnoreFilter, ProjectLayout, Storage,
-};
+use ua_persist::{blake3_file, walk_project, Fingerprint, IgnoreFilter, ProjectLayout, Storage};
 
 #[derive(ClapArgs, Debug)]
 pub struct Args {
@@ -48,9 +46,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
             .and_then(|lang| {
                 std::fs::read_to_string(&path)
                     .ok()
-                    .and_then(|content| {
-                        plugin_registry.structural_hash_of(&lang, &rel, &content)
-                    })
+                    .and_then(|content| plugin_registry.structural_hash_of(&lang, &rel, &content))
             });
         prints.push(Fingerprint {
             path: rel,

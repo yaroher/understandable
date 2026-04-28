@@ -46,12 +46,7 @@ async fn boot_with(state: AppState) -> (String, tokio::task::JoinHandle<()>) {
 
 #[tokio::test]
 async fn graph_endpoint_returns_codebase_by_default() {
-    let state = AppState::with_graphs(
-        empty_graph("codebase-only"),
-        None,
-        None,
-        PathBuf::new(),
-    );
+    let state = AppState::with_graphs(empty_graph("codebase-only"), None, None, PathBuf::new());
     let (base, handle) = boot_with(state).await;
 
     let resp = reqwest::get(format!("{base}/api/graph"))
@@ -105,12 +100,7 @@ async fn graph_endpoint_honours_kind_param() {
 #[tokio::test]
 async fn diff_endpoint_returns_no_content_when_missing() {
     let dir = tempfile::tempdir().unwrap();
-    let state = AppState::with_graphs(
-        empty_graph("p"),
-        None,
-        None,
-        dir.path().to_path_buf(),
-    );
+    let state = AppState::with_graphs(empty_graph("p"), None, None, dir.path().to_path_buf());
     let (base, handle) = boot_with(state).await;
 
     let resp = reqwest::get(format!("{base}/api/diff")).await.unwrap();
@@ -133,12 +123,7 @@ async fn diff_endpoint_returns_overlay_when_present() {
     )
     .unwrap();
 
-    let state = AppState::with_graphs(
-        empty_graph("p"),
-        None,
-        None,
-        dir.path().to_path_buf(),
-    );
+    let state = AppState::with_graphs(empty_graph("p"), None, None, dir.path().to_path_buf());
     let (base, handle) = boot_with(state).await;
 
     let resp = reqwest::get(format!("{base}/api/diff")).await.unwrap();
@@ -152,12 +137,7 @@ async fn diff_endpoint_returns_overlay_when_present() {
 
 #[tokio::test]
 async fn pagination_does_not_overflow_on_huge_offset() {
-    let state = AppState::with_graphs(
-        empty_graph("p"),
-        None,
-        None,
-        PathBuf::new(),
-    );
+    let state = AppState::with_graphs(empty_graph("p"), None, None, PathBuf::new());
     let (base, handle) = boot_with(state).await;
 
     // `offset + limit` would wrap a `usize` before the
@@ -176,11 +156,7 @@ async fn pagination_does_not_overflow_on_huge_offset() {
     assert_eq!(body["limit"], 1000);
 
     // Same guard for edges.
-    let url = format!(
-        "{base}/api/graph/edges?offset={}&limit={}",
-        usize::MAX,
-        1
-    );
+    let url = format!("{base}/api/graph/edges?offset={}&limit={}", usize::MAX, 1);
     let resp = reqwest::get(&url).await.unwrap();
     assert_eq!(resp.status(), reqwest::StatusCode::OK);
 

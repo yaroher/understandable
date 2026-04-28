@@ -2,9 +2,7 @@ use ua_core::{
     Complexity, EdgeDirection, EdgeType, GraphEdge, GraphNode, KnowledgeGraph, Layer, NodeType,
     ProjectMeta, TourStep,
 };
-use ua_persist::{
-    blake3_string, Fingerprint, ProjectLayout, Storage,
-};
+use ua_persist::{blake3_string, Fingerprint, ProjectLayout, Storage};
 
 fn sample_graph() -> KnowledgeGraph {
     KnowledgeGraph {
@@ -113,7 +111,10 @@ async fn fts_search_finds_node() {
     let s = Storage::open_fresh().await.unwrap();
     s.save_graph(&sample_graph()).await.unwrap();
     let hits = s.search_nodes("entry", 5).await.unwrap();
-    assert!(hits.contains(&"file:src/main.rs".to_string()), "got {hits:?}");
+    assert!(
+        hits.contains(&"file:src/main.rs".to_string()),
+        "got {hits:?}"
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]

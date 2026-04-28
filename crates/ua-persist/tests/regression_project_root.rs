@@ -7,8 +7,7 @@
 //! reopening the same project after the first stamp is idempotent.
 
 use ua_core::{
-    Complexity, Error, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-    StorageSettings,
+    Complexity, Error, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta, StorageSettings,
 };
 use ua_persist::{ProjectLayout, Storage};
 

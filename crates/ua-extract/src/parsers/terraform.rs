@@ -183,9 +183,13 @@ output "bucket_name" { value = "x" }
         let src = "resource \"aws_s3_bucket\" \"logs\" {\r\n  bucket = \"x\"\r\n}\r\nvariable \"region\" {\r\n  type = string\r\n}\r\n";
         let a = analyze(src);
         let res = a.resources.unwrap();
-        assert!(res.iter().any(|r| r.name == "logs" && r.kind == "aws_s3_bucket"));
+        assert!(res
+            .iter()
+            .any(|r| r.name == "logs" && r.kind == "aws_s3_bucket"));
         let defs = a.definitions.unwrap();
-        assert!(defs.iter().any(|d| d.name == "region" && d.kind == "variable"));
+        assert!(defs
+            .iter()
+            .any(|d| d.name == "region" && d.kind == "variable"));
     }
 
     #[test]
@@ -199,11 +203,15 @@ output "bucket_name" { value = "x" }
         let start = std::time::Instant::now();
         let a = analyze(&src);
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 500, "terraform parse took {elapsed:?}");
+        assert!(
+            elapsed.as_millis() < 500,
+            "terraform parse took {elapsed:?}"
+        );
         assert!(a.resources.is_some());
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_terraform_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

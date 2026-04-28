@@ -7,8 +7,7 @@
 //! unmatched files landing in a synthetic "Other" bucket.
 
 use ua_analyzer::{
-    apply_llm_layers, parse_layer_detection_response, FileMeta, GraphBuilder,
-    LlmLayerResponse,
+    apply_llm_layers, parse_layer_detection_response, FileMeta, GraphBuilder, LlmLayerResponse,
 };
 use ua_core::{Complexity, KnowledgeGraph, NodeType};
 
@@ -100,7 +99,11 @@ fn apply_llm_layers_assigns_each_file_exactly_once() {
         .iter()
         .filter(|n| n.node_type == NodeType::File)
         .count();
-    assert_eq!(tally.len(), file_count, "every file node placed exactly once");
+    assert_eq!(
+        tally.len(),
+        file_count,
+        "every file node placed exactly once"
+    );
     for (nid, count) in &tally {
         assert_eq!(*count, 1, "node {nid} appeared {count} times across layers");
     }
@@ -114,7 +117,10 @@ fn apply_llm_layers_assigns_each_file_exactly_once() {
     assert!(api.node_ids.contains(&"file:src/api/users.ts".to_string()));
     assert!(api.node_ids.contains(&"file:src/api/auth.ts".to_string()));
 
-    assert_eq!(service.node_ids, vec!["file:src/services/payments.ts".to_string()]);
+    assert_eq!(
+        service.node_ids,
+        vec!["file:src/services/payments.ts".to_string()]
+    );
 
     assert_eq!(other.node_ids, vec!["file:src/lib/format.ts".to_string()]);
     // Default description for the synthesized bucket.

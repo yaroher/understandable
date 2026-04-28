@@ -67,7 +67,10 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
         anyhow::bail!("validation failed");
     }
     if args.strict && has_warnings {
-        anyhow::bail!("validation failed (strict): {} warning(s)", report.warnings.len());
+        anyhow::bail!(
+            "validation failed (strict): {} warning(s)",
+            report.warnings.len()
+        );
     }
     Ok(())
 }

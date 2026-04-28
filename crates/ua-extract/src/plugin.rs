@@ -1,8 +1,6 @@
 //! Per-file extraction trait shared by every analyzer plugin.
 
-use ua_core::{
-    CallGraphEntry, Error, ImportResolution, ReferenceResolution, StructuralAnalysis,
-};
+use ua_core::{CallGraphEntry, Error, ImportResolution, ReferenceResolution, StructuralAnalysis};
 
 /// Deprecated alias kept for one release so callers that imported
 /// `ua_extract::PluginError` keep compiling. New code should depend

@@ -58,7 +58,13 @@ const KNOWN_VERBS: &[&str] = &[
 /// `understandable` instead of a verb (e.g. `understandable
 /// --version`, `understandable --help`).
 const TOP_LEVEL_FLAGS: &[&str] = &[
-    "--version", "-V", "--help", "-h", "--path", "-v", "--verbose",
+    "--version",
+    "-V",
+    "--help",
+    "-h",
+    "--path",
+    "-v",
+    "--verbose",
 ];
 
 #[test]

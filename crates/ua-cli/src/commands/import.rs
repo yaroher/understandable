@@ -53,7 +53,7 @@ pub struct Args {
 }
 
 pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
-    let raw = if args.r#in == PathBuf::from("-") {
+    let raw = if args.r#in == std::path::Path::new("-") {
         let mut buf = String::new();
         std::io::stdin().read_to_string(&mut buf)?;
         buf

@@ -118,7 +118,9 @@ mod tests {
         let src = "VERSION = 1.0\r\nall: build test\r\nbuild:\r\n\techo build\r\n";
         let a = analyze(src);
         let defs = a.definitions.unwrap();
-        assert!(defs.iter().any(|d| d.name == "VERSION" && d.kind == "variable"));
+        assert!(defs
+            .iter()
+            .any(|d| d.name == "VERSION" && d.kind == "variable"));
         let steps = a.steps.unwrap();
         assert!(steps.iter().any(|s| s.name.starts_with("all <-")));
         assert!(steps.iter().any(|s| s.name == "build"));
@@ -138,6 +140,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_makefile_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

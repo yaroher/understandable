@@ -154,9 +154,7 @@ fn extract_wikilinks(body: &str) -> Vec<String> {
 
 fn path_slug(path: &Path, root: &Path) -> String {
     let rel = path.strip_prefix(root).unwrap_or(path);
-    rel.with_extension("")
-        .to_string_lossy()
-        .replace('\\', "/")
+    rel.with_extension("").to_string_lossy().replace('\\', "/")
 }
 
 /// Build a `kind=knowledge` graph from parsed articles. Articles

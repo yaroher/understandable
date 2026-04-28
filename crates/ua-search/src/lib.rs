@@ -9,9 +9,7 @@
 pub mod context;
 pub mod engine;
 
-pub use context::{
-    build_chat_context, format_context_for_prompt, ChatContext,
-};
+pub use context::{build_chat_context, format_context_for_prompt, ChatContext};
 pub use engine::{SearchEngine, SearchOptions, SearchResult};
 
 #[allow(unused_imports)]

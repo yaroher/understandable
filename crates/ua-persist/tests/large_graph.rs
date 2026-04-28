@@ -4,8 +4,8 @@
 //! samples used elsewhere.
 
 use ua_core::{
-    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph,
-    Layer, NodeType, ProjectMeta, TourStep,
+    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph, Layer,
+    NodeType, ProjectMeta, TourStep,
 };
 use ua_persist::{ProjectLayout, Storage};
 
@@ -90,11 +90,16 @@ fn build_graph() -> KnowledgeGraph {
 fn sort_graph(g: &mut KnowledgeGraph) {
     g.nodes.sort_by(|a, b| a.id.cmp(&b.id));
     g.edges.sort_by(|a, b| {
-        (a.source.as_str(), a.target.as_str(), edge_type_str(a.edge_type)).cmp(&(
-            b.source.as_str(),
-            b.target.as_str(),
-            edge_type_str(b.edge_type),
-        ))
+        (
+            a.source.as_str(),
+            a.target.as_str(),
+            edge_type_str(a.edge_type),
+        )
+            .cmp(&(
+                b.source.as_str(),
+                b.target.as_str(),
+                edge_type_str(b.edge_type),
+            ))
     });
 }
 

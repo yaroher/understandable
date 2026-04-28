@@ -12,18 +12,17 @@ use std::sync::Arc;
 use clap::Args as ClapArgs;
 use serde::Serialize;
 use ua_analyzer::{
-    classify_change_with, detect_layers, generate_heuristic_tour,
-    ChangeLevel as ClassifierLevel, FileMeta, GraphBuilder,
+    classify_change_with, detect_layers, generate_heuristic_tour, ChangeLevel as ClassifierLevel,
+    FileMeta, GraphBuilder,
 };
 use ua_core::{Complexity, GraphNode, KnowledgeGraph, NodeType, ProjectSettings};
 use ua_extract::{default_registry, FrameworkRegistry, LanguageRegistry, PluginRegistry};
 use ua_llm::{
-    file_summary_prompts, parse_file_summary, AnthropicClient, CompleteRequest,
-    FileSummaryRequest,
+    file_summary_prompts, parse_file_summary, AnthropicClient, CompleteRequest, FileSummaryRequest,
 };
 use ua_persist::{
-    blake3_file, blake3_string, fingerprint::modtime_secs, walk_project, Fingerprint,
-    IgnoreFilter, ProjectLayout, Storage,
+    blake3_file, blake3_string, fingerprint::modtime_secs, walk_project, Fingerprint, IgnoreFilter,
+    ProjectLayout, Storage,
 };
 
 use crate::commands::usage::TokenTotals;
@@ -160,8 +159,7 @@ pub async fn run(mut args: Args, project_path: &Path) -> anyhow::Result<()> {
     // the team-wide name, and the CLI flag is a per-invocation
     // override.
     let project_name = resolve_project_name(args.name.as_deref(), &settings, project_path);
-    let git_hash =
-        ua_persist::staleness::current_git_head(project_path).unwrap_or_default();
+    let git_hash = ua_persist::staleness::current_git_head(project_path).unwrap_or_default();
 
     // `--scan-only` is a one-shot dump of the project-scanner JSON
     // shape used by the TS agent. It deliberately bypasses the
@@ -354,8 +352,10 @@ async fn run_incremental(
     let storage = Storage::open(&layout).await?;
     let mut graph = storage.load_graph().await?;
     let stored_prints: Vec<Fingerprint> = storage.read_fingerprints().await?;
-    let stored_by_path: BTreeMap<String, Fingerprint> =
-        stored_prints.iter().map(|f| (f.path.clone(), f.clone())).collect();
+    let stored_by_path: BTreeMap<String, Fingerprint> = stored_prints
+        .iter()
+        .map(|f| (f.path.clone(), f.clone()))
+        .collect();
 
     let filter = IgnoreFilter {
         extra_ignore_paths: settings.ignore.paths.clone(),
@@ -697,7 +697,11 @@ async fn run_llm_summaries(
     let project_path: PathBuf = project_path.to_path_buf();
 
     for file in files.iter().take(cap) {
-        let permit = sem.clone().acquire_owned().await.expect("semaphore not closed");
+        let permit = sem
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("semaphore not closed");
         let storage = storage.clone();
         let client = client.clone();
         let registry = registry.clone();
@@ -722,8 +726,7 @@ async fn run_llm_summaries(
         });
     }
 
-    let mut metas: std::collections::HashMap<String, FileMeta> =
-        std::collections::HashMap::new();
+    let mut metas: std::collections::HashMap<String, FileMeta> = std::collections::HashMap::new();
     let mut totals = TokenTotals::default();
     let mut hits = 0usize;
     let mut misses = 0usize;
@@ -756,9 +759,7 @@ async fn run_llm_summaries(
     }
 
     if files.len() > cap {
-        tracing::info!(
-            "LLM file cap ({cap}) reached; remaining files keep the empty stub meta"
-        );
+        tracing::info!("LLM file cap ({cap}) reached; remaining files keep the empty stub meta");
     }
 
     let total = hits + misses;
@@ -1003,13 +1004,8 @@ fn compute_fingerprints(project: &Path, files: &[PathBuf]) -> Vec<Fingerprint> {
         // only when language is recognised — but the post-walk file set
         // is dominated by sources we'd parse anyway, and a single
         // read_to_string is cheaper than a second IO pass downstream.
-        let structural_hash = compute_structural_hash(
-            &lang_registry,
-            &plugin_registry,
-            path,
-            &rel,
-            None,
-        );
+        let structural_hash =
+            compute_structural_hash(&lang_registry, &plugin_registry, path, &rel, None);
         out.push(Fingerprint {
             path: rel,
             hash,
@@ -1046,21 +1042,25 @@ fn compute_structural_hash(
     }
 }
 
-fn any_directory_change(
-    deleted: &[String],
-    reanalysed: &[String],
-    graph: &KnowledgeGraph,
-) -> bool {
+fn any_directory_change(deleted: &[String], reanalysed: &[String], graph: &KnowledgeGraph) -> bool {
     let known_dirs: BTreeSet<String> = graph
         .nodes
         .iter()
         .filter_map(|n| n.file_path.as_deref())
-        .map(|p| p.rsplit_once('/').map(|(d, _)| d.to_string()).unwrap_or_default())
+        .map(|p| {
+            p.rsplit_once('/')
+                .map(|(d, _)| d.to_string())
+                .unwrap_or_default()
+        })
         .collect();
     let touched: BTreeSet<String> = deleted
         .iter()
         .chain(reanalysed.iter())
-        .map(|p| p.rsplit_once('/').map(|(d, _)| d.to_string()).unwrap_or_default())
+        .map(|p| {
+            p.rsplit_once('/')
+                .map(|(d, _)| d.to_string())
+                .unwrap_or_default()
+        })
         .collect();
     touched.iter().any(|d| !known_dirs.contains(d))
 }
@@ -1139,32 +1139,31 @@ fn apply_partial_update(
         // identical empty embedding text — `node_text` would then
         // produce the same `name :: summary :: tags` triple and the
         // bulk embedder would treat them as duplicates.
-        let (summary, tags, complexity, language_notes, domain_meta, knowledge_meta) =
-            match prior {
-                Some(p) => (
-                    p.summary.clone(),
-                    p.tags.clone(),
-                    p.complexity,
-                    p.language_notes.clone(),
-                    p.domain_meta.clone(),
-                    p.knowledge_meta.clone(),
-                ),
-                None => {
-                    tracing::info!(
-                        target: "ua_cli::analyze",
-                        path = %path,
-                        "needs-llm: reanalysed file has no prior node — seeded stub summary, run `analyze --with-llm` to enrich"
-                    );
-                    (
-                        format!("{basename} ({path})"),
-                        Vec::new(),
-                        Complexity::Moderate,
-                        None,
-                        None,
-                        None,
-                    )
-                }
-            };
+        let (summary, tags, complexity, language_notes, domain_meta, knowledge_meta) = match prior {
+            Some(p) => (
+                p.summary.clone(),
+                p.tags.clone(),
+                p.complexity,
+                p.language_notes.clone(),
+                p.domain_meta.clone(),
+                p.knowledge_meta.clone(),
+            ),
+            None => {
+                tracing::info!(
+                    target: "ua_cli::analyze",
+                    path = %path,
+                    "needs-llm: reanalysed file has no prior node — seeded stub summary, run `analyze --with-llm` to enrich"
+                );
+                (
+                    format!("{basename} ({path})"),
+                    Vec::new(),
+                    Complexity::Moderate,
+                    None,
+                    None,
+                    None,
+                )
+            }
+        };
 
         graph.nodes.push(GraphNode {
             id,
@@ -1233,9 +1232,8 @@ fn resolve_llm_max_files(cli: usize, settings: &ProjectSettings) -> usize {
 /// (e.g. `system="a", user="b|c"` and `system="a|b", user="c"` shared a
 /// digest). Encoding lengths up front makes the boundary unambiguous.
 fn compute_prompt_hash(system: &str, user: &str) -> String {
-    let mut buf: Vec<u8> = Vec::with_capacity(
-        b"sys".len() + 8 + system.len() + b"usr".len() + 8 + user.len(),
-    );
+    let mut buf: Vec<u8> =
+        Vec::with_capacity(b"sys".len() + 8 + system.len() + b"usr".len() + 8 + user.len());
     buf.extend_from_slice(b"sys");
     buf.extend_from_slice(&(system.len() as u64).to_le_bytes());
     buf.extend_from_slice(system.as_bytes());
@@ -1319,7 +1317,9 @@ fn classify_file_category(rel: &str) -> &'static str {
     if lower.ends_with(".md") || lower.ends_with(".rst") || lower.ends_with(".txt") {
         return "doc";
     }
-    if lower.ends_with(".json") || lower.ends_with(".yaml") || lower.ends_with(".yml")
+    if lower.ends_with(".json")
+        || lower.ends_with(".yaml")
+        || lower.ends_with(".yml")
         || lower.ends_with(".toml")
     {
         // Config-shaped names live in this bucket too. Distinguish
@@ -1459,7 +1459,11 @@ async fn run_scan_only(
     let frameworks = ua_extract::detect_frameworks(&fw_registry, &manifest_refs, &[]);
 
     let readme_head = read_readme_head(project_path);
-    let raw_description = settings.project.description.clone().filter(|s| !s.is_empty());
+    let raw_description = settings
+        .project
+        .description
+        .clone()
+        .filter(|s| !s.is_empty());
 
     let result = ScanResult {
         name: project_name.to_string(),
@@ -1535,10 +1539,8 @@ mod tests {
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.subsec_nanos())
                 .unwrap_or(0);
-            let path = std::env::temp_dir().join(format!(
-                "ua-cli-test-{tag}-{}-{nanos}",
-                std::process::id()
-            ));
+            let path = std::env::temp_dir()
+                .join(format!("ua-cli-test-{tag}-{}-{nanos}", std::process::id()));
             std::fs::create_dir_all(&path).unwrap();
             Self { path }
         }
@@ -1753,10 +1755,7 @@ mod tests {
 
         // Settings populates → settings wins over basename.
         s.project.name = Some("from-settings".into());
-        assert_eq!(
-            resolve_project_name(None, &s, tmp.path()),
-            "from-settings"
-        );
+        assert_eq!(resolve_project_name(None, &s, tmp.path()), "from-settings");
 
         // CLI populates → CLI wins over both.
         assert_eq!(
@@ -1786,4 +1785,3 @@ mod tests {
         assert_eq!(classify_file_category("src/foo.rs"), "source");
     }
 }
-

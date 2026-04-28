@@ -2,10 +2,8 @@
 //! and rejects dim mismatches via two paths (registered meta row and
 //! the orphan-row cross-check).
 
-use ua_core::{
-    Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-};
 use ua_core::Error;
+use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
 use ua_persist::{ProjectLayout, Storage};
 
 fn tiny_corpus() -> KnowledgeGraph {
@@ -175,15 +173,17 @@ async fn batch_upsert_is_idempotent_on_text_hash_check() {
     s.save_graph(&tiny_corpus()).await.unwrap();
     s.ensure_embeddings_table("m", 4).await.unwrap();
 
-    let rows: Vec<(&str, &str, &[f32])> =
-        vec![("n:north", "v1", &[1.0, 0.0, 0.0, 0.0])];
+    let rows: Vec<(&str, &str, &[f32])> = vec![("n:north", "v1", &[1.0, 0.0, 0.0, 0.0])];
     s.upsert_node_embeddings_batch("m", &rows).await.unwrap();
     s.upsert_node_embeddings_batch("m", &rows).await.unwrap();
     assert_eq!(s.embedding_count("m").await.unwrap(), 1);
 
     // Confirm the hash sticks.
     assert_eq!(
-        s.embedding_hash_for("n:north", "m").await.unwrap().as_deref(),
+        s.embedding_hash_for("n:north", "m")
+            .await
+            .unwrap()
+            .as_deref(),
         Some("v1")
     );
 }

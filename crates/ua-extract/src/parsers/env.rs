@@ -106,6 +106,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_env_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

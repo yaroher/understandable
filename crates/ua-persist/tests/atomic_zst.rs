@@ -10,8 +10,8 @@
 //!      `.db.zst` must still load cleanly.
 
 use ua_core::{
-    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph,
-    Layer, NodeType, ProjectMeta, TourStep,
+    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph, Layer,
+    NodeType, ProjectMeta, TourStep,
 };
 use ua_persist::{ProjectLayout, Storage};
 
@@ -118,5 +118,8 @@ async fn save_overwrites_with_atomic_rename() {
         std::path::PathBuf::from(s)
     };
     assert!(zst_path.exists());
-    assert!(!tmp_path.exists(), "atomic_write must remove the .tmp file via rename");
+    assert!(
+        !tmp_path.exists(),
+        "atomic_write must remove the .tmp file via rename"
+    );
 }

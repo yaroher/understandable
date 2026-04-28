@@ -3,9 +3,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
-use ua_core::{
-    Complexity, EdgeType, GraphEdge, GraphNode, KnowledgeGraph, Layer, NodeType,
-};
+use ua_core::{Complexity, EdgeType, GraphEdge, GraphNode, KnowledgeGraph, Layer, NodeType};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]

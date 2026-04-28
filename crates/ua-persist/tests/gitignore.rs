@@ -68,7 +68,11 @@ src/keep_me.txt
     assert_eq!(outcome, GitignoreOutcome::Updated);
 
     let body = fs::read_to_string(&path).unwrap();
-    assert_eq!(count_blocks(&body), 1, "should be exactly one block:\n{body}");
+    assert_eq!(
+        count_blocks(&body),
+        1,
+        "should be exactly one block:\n{body}"
+    );
     // User lines preserved.
     assert!(body.contains("node_modules/"));
     assert!(body.contains(".idea/"));
@@ -139,7 +143,10 @@ fn idempotent_when_already_current() {
     let second = apply_block(dir.path(), GitignorePolicy::CommitDb, &s.storage).unwrap();
     assert_eq!(second, GitignoreOutcome::AlreadyCurrent);
     let after_second = fs::read_to_string(&path).unwrap();
-    assert_eq!(after_first, after_second, "byte-identical on idempotent apply");
+    assert_eq!(
+        after_first, after_second,
+        "byte-identical on idempotent apply"
+    );
 }
 
 #[test]
@@ -245,7 +252,10 @@ BOTTOM_USER_LINE
     let middle_pos = body.find("MIDDLE_USER_LINE").unwrap();
     let bottom_pos = body.find("BOTTOM_USER_LINE").unwrap();
 
-    assert!(top_pos < header_pos, "fresh block should follow TOP_USER_LINE");
+    assert!(
+        top_pos < header_pos,
+        "fresh block should follow TOP_USER_LINE"
+    );
     assert!(
         header_pos < middle_pos,
         "fresh block should sit before MIDDLE_USER_LINE (where the first stale block lived)"

@@ -35,7 +35,11 @@ pub const SPEC: LangSpec = LangSpec {
     class_body_kinds: &["declaration_list"],
     method_kinds: &["method_declaration"],
     property_kinds: &["property_declaration"],
-    function_node_kinds: &["function_definition", "method_declaration", "anonymous_function_creation_expression"],
+    function_node_kinds: &[
+        "function_definition",
+        "method_declaration",
+        "anonymous_function_creation_expression",
+    ],
 };
 
 fn lang() -> tree_sitter::Language {

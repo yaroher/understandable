@@ -267,10 +267,7 @@ pub fn validate_graph(graph: &KnowledgeGraph) -> ValidationReport {
             issues.push(ValidationIssue {
                 severity: Severity::Error,
                 code: codes::MISSING_SOURCE_NODE.to_string(),
-                message: format!(
-                    "edge[{i}] source '{}' not found among nodes",
-                    edge.source
-                ),
+                message: format!("edge[{i}] source '{}' not found among nodes", edge.source),
                 node_id: Some(edge.source.clone()),
                 edge_id: Some(edge_id.clone()),
             });
@@ -280,10 +277,7 @@ pub fn validate_graph(graph: &KnowledgeGraph) -> ValidationReport {
             issues.push(ValidationIssue {
                 severity: Severity::Error,
                 code: codes::MISSING_TARGET_NODE.to_string(),
-                message: format!(
-                    "edge[{i}] target '{}' not found among nodes",
-                    edge.target
-                ),
+                message: format!("edge[{i}] target '{}' not found among nodes", edge.target),
                 node_id: Some(edge.target.clone()),
                 edge_id: Some(edge_id.clone()),
             });
@@ -293,10 +287,7 @@ pub fn validate_graph(graph: &KnowledgeGraph) -> ValidationReport {
             issues.push(ValidationIssue {
                 severity: Severity::Error,
                 code: codes::INVALID_EDGE_WEIGHT.to_string(),
-                message: format!(
-                    "edge[{i}] weight {} out of [0,1]",
-                    edge.weight
-                ),
+                message: format!("edge[{i}] weight {} out of [0,1]", edge.weight),
                 node_id: None,
                 edge_id: Some(edge_id),
             });
@@ -314,10 +305,7 @@ pub fn validate_graph(graph: &KnowledgeGraph) -> ValidationReport {
                 issues.push(ValidationIssue {
                     severity: Severity::Error,
                     code: codes::LAYER_MISSING_NODE.to_string(),
-                    message: format!(
-                        "layer '{}' references unknown node '{}'",
-                        layer.id, nid
-                    ),
+                    message: format!("layer '{}' references unknown node '{}'", layer.id, nid),
                     node_id: Some(nid.clone()),
                     edge_id: None,
                 });
@@ -373,10 +361,7 @@ pub fn validate_graph(graph: &KnowledgeGraph) -> ValidationReport {
                 issues.push(ValidationIssue {
                     severity: Severity::Error,
                     code: codes::TOUR_MISSING_NODE.to_string(),
-                    message: format!(
-                        "tour step {} references unknown node '{}'",
-                        step.order, nid
-                    ),
+                    message: format!("tour step {} references unknown node '{}'", step.order, nid),
                     node_id: Some(nid.clone()),
                     edge_id: None,
                 });
@@ -580,16 +565,14 @@ mod tests {
         g.edges.push(edge("a", "b"));
 
         let r = validate_graph(&g);
-        assert!(
-            r.warnings
-                .iter()
-                .any(|w| w.code == codes::MISSING_TAGS && w.node_id.as_deref() == Some("a"))
-        );
-        assert!(
-            r.warnings
-                .iter()
-                .any(|w| w.code == codes::MISSING_SUMMARY && w.node_id.as_deref() == Some("a"))
-        );
+        assert!(r
+            .warnings
+            .iter()
+            .any(|w| w.code == codes::MISSING_TAGS && w.node_id.as_deref() == Some("a")));
+        assert!(r
+            .warnings
+            .iter()
+            .any(|w| w.code == codes::MISSING_SUMMARY && w.node_id.as_deref() == Some("a")));
     }
 
     #[test]
@@ -642,11 +625,10 @@ mod tests {
         g.edges.push(edge("a", "ghost"));
         let r = validate_graph(&g);
         assert!(!r.valid);
-        assert!(
-            r.issues
-                .iter()
-                .any(|i| i.code == codes::MISSING_TARGET_NODE)
-        );
+        assert!(r
+            .issues
+            .iter()
+            .any(|i| i.code == codes::MISSING_TARGET_NODE));
     }
 
     #[test]
@@ -672,10 +654,7 @@ mod tests {
             "edgeTypes",
             "complexityHistogram",
         ] {
-            assert!(
-                stats.get(k).is_some(),
-                "stats missing key {k}: {stats}"
-            );
+            assert!(stats.get(k).is_some(), "stats missing key {k}: {stats}");
         }
         let hist = stats.get("complexityHistogram").unwrap();
         for k in ["simple", "moderate", "complex"] {

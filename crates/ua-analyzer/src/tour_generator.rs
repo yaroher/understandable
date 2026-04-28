@@ -113,11 +113,7 @@ pub fn generate_heuristic_tour(graph: &KnowledgeGraph) -> Vec<TourStep> {
             steps.push(TourStep {
                 order: 0,
                 title: layer.name.clone(),
-                description: format!(
-                    "{}. Key files: {}.",
-                    layer.description,
-                    names.join(", ")
-                ),
+                description: format!("{}. Key files: {}.", layer.description, names.join(", ")),
                 node_ids: nodes.iter().map(|s| s.to_string()).collect(),
                 language_lesson: None,
             });
@@ -128,7 +124,11 @@ pub fn generate_heuristic_tour(graph: &KnowledgeGraph) -> Vec<TourStep> {
             .iter()
             .flat_map(|l| l.node_ids.iter().map(|s| s.as_str()))
             .collect();
-        let unlayered: Vec<&str> = topo.iter().copied().filter(|id| !layered.contains(id)).collect();
+        let unlayered: Vec<&str> = topo
+            .iter()
+            .copied()
+            .filter(|id| !layered.contains(id))
+            .collect();
         if !unlayered.is_empty() {
             let names: Vec<&str> = unlayered
                 .iter()
@@ -147,7 +147,11 @@ pub fn generate_heuristic_tour(graph: &KnowledgeGraph) -> Vec<TourStep> {
         for (i, batch) in topo.chunks(3).enumerate() {
             let summary = batch
                 .iter()
-                .filter_map(|id| node_map.get(id).map(|n| format!("{} ({})", n.name, n.summary)))
+                .filter_map(|id| {
+                    node_map
+                        .get(id)
+                        .map(|n| format!("{} ({})", n.name, n.summary))
+                })
                 .collect::<Vec<_>>()
                 .join("; ");
             steps.push(TourStep {

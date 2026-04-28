@@ -176,8 +176,8 @@ impl AppState {
         // `/api/source` lookup can compare prefixes cheaply without
         // touching the filesystem again. Falls back to the raw path if
         // canonicalisation fails (e.g. on a deleted dir during tests).
-        let canonical_root = std::fs::canonicalize(project_root)
-            .unwrap_or_else(|_| project_root.to_path_buf());
+        let canonical_root =
+            std::fs::canonicalize(project_root).unwrap_or_else(|_| project_root.to_path_buf());
         Ok(Self::with_graphs_and_root(
             primary,
             domain,
@@ -200,10 +200,7 @@ impl AppState {
     }
 }
 
-async fn load_optional_kind(
-    layout: &ProjectLayout,
-    kind: &str,
-) -> Option<KnowledgeGraph> {
+async fn load_optional_kind(layout: &ProjectLayout, kind: &str) -> Option<KnowledgeGraph> {
     // If there's no compressed file on disk we don't need to spin up an
     // empty DB just to return an empty graph — short-circuit and report
     // "not present".

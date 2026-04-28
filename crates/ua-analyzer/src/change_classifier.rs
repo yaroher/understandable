@@ -276,7 +276,10 @@ fn collect_ts_js(line: &str, out: &mut BTreeSet<String>) {
 }
 
 fn collect_python(line: &str, out: &mut BTreeSet<String>) {
-    if let Some(rest) = line.strip_prefix("def ").or_else(|| line.strip_prefix("async def ")) {
+    if let Some(rest) = line
+        .strip_prefix("def ")
+        .or_else(|| line.strip_prefix("async def "))
+    {
         let name = take_ident(rest);
         if !name.is_empty() {
             out.insert(format!("fn:{name}"));
@@ -459,10 +462,7 @@ fn collect_php(line: &str, out: &mut BTreeSet<String>) {
         }
     }
     if line.starts_with("use ") {
-        let rest = line
-            .trim_start_matches("use ")
-            .trim_end_matches(';')
-            .trim();
+        let rest = line.trim_start_matches("use ").trim_end_matches(';').trim();
         if !rest.is_empty() {
             out.insert(format!("use:{rest}"));
         }

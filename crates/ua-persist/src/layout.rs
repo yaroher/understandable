@@ -43,10 +43,7 @@ impl ProjectLayout {
 
     /// Build the layout from a settings block. The `dir` is resolved
     /// relative to `project_root` when it isn't absolute.
-    pub fn with_storage(
-        project_root: impl AsRef<Path>,
-        storage: &StorageSettings,
-    ) -> Self {
+    pub fn with_storage(project_root: impl AsRef<Path>, storage: &StorageSettings) -> Self {
         let project_root_path = project_root.as_ref().to_path_buf();
         let dir_path = Path::new(&storage.dir);
         let root = if dir_path.is_absolute() {

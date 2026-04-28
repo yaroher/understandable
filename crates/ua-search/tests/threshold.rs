@@ -55,9 +55,11 @@ fn good_match_scores_below_one() {
     // Sanity check: a sensible query should bring scores well below the
     // 0.95 cutoff so we know the threshold isn't simply rejecting
     // everything.
-    let engine = SearchEngine::new(vec![
-        node("function:src/a.rs:authenticate", "authenticate", "log a user in"),
-    ]);
+    let engine = SearchEngine::new(vec![node(
+        "function:src/a.rs:authenticate",
+        "authenticate",
+        "log a user in",
+    )]);
     let results = engine.search("authenticate", &SearchOptions::default());
     assert_eq!(results.len(), 1);
     assert!(

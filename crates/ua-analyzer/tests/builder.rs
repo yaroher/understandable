@@ -59,23 +59,28 @@ fn builder_emits_file_function_class_nodes() {
     let func_id = "function:src/auth.ts:login";
     let class_id = "class:src/auth.ts:Auth";
     let file_id = "file:src/auth.ts";
-    assert!(g.nodes.iter().any(|n| n.id == func_id && n.node_type == NodeType::Function));
-    assert!(g.nodes.iter().any(|n| n.id == class_id && n.node_type == NodeType::Class));
+    assert!(g
+        .nodes
+        .iter()
+        .any(|n| n.id == func_id && n.node_type == NodeType::Function));
+    assert!(g
+        .nodes
+        .iter()
+        .any(|n| n.id == class_id && n.node_type == NodeType::Class));
     let file_node = g.nodes.iter().find(|n| n.id == file_id).unwrap();
     assert_eq!(file_node.summary, "auth file");
 
     // contains edges
-    assert!(g.edges.iter().any(|e| e.source == file_id
-        && e.target == func_id
-        && e.edge_type == EdgeType::Contains));
+    assert!(g
+        .edges
+        .iter()
+        .any(|e| e.source == file_id && e.target == func_id && e.edge_type == EdgeType::Contains));
     // imports edge
-    assert!(g.edges.iter().any(|e|
-        e.edge_type == EdgeType::Imports
+    assert!(g.edges.iter().any(|e| e.edge_type == EdgeType::Imports
         && e.source == "file:src/auth.ts"
         && e.target == "file:src/util.ts"));
     // calls edge
-    assert!(g.edges.iter().any(|e|
-        e.edge_type == EdgeType::Calls
+    assert!(g.edges.iter().any(|e| e.edge_type == EdgeType::Calls
         && e.source == "function:src/auth.ts:login"
         && e.target == "function:src/util.ts:checkToken"));
 }
@@ -154,11 +159,7 @@ fn builder_push_edge_skips_duplicates_repeatedly() {
 #[test]
 fn apply_llm_layers_merges_duplicate_names() {
     let mut b = GraphBuilder::new("demo", "");
-    for path in [
-        "api/users.ts",
-        "routes/login.ts",
-        "lib/utils.ts",
-    ] {
+    for path in ["api/users.ts", "routes/login.ts", "lib/utils.ts"] {
         b.add_file(
             path,
             FileMeta {
@@ -195,10 +196,7 @@ fn apply_llm_layers_merges_duplicate_names() {
         .expect("merged API layer present");
     let mut node_ids = api.node_ids.clone();
     node_ids.sort();
-    assert_eq!(
-        node_ids,
-        vec!["file:api/users.ts", "file:routes/login.ts"]
-    );
+    assert_eq!(node_ids, vec!["file:api/users.ts", "file:routes/login.ts"]);
     // Description comes from the first matching LlmLayerResponse.
     assert_eq!(api.description, "first description");
 
@@ -293,4 +291,3 @@ fn heuristic_tour_uses_layers_when_present() {
     assert!(titles.contains(&"API Layer"));
     assert!(titles.contains(&"Service Layer"));
 }
-

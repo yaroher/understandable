@@ -26,9 +26,7 @@ use ua_core::{
     NodeType, ProjectMeta, TourStep,
 };
 
-use crate::archive::{
-    self, entry, ArchiveEntry, UNDERSTANDABLE_SCHEMA_VERSION,
-};
+use crate::archive::{self, entry, ArchiveEntry, UNDERSTANDABLE_SCHEMA_VERSION};
 use crate::fingerprint::Fingerprint;
 use crate::layout::ProjectLayout;
 
@@ -119,8 +117,7 @@ impl Default for LlmOutputCache {
 
 /// Deterministic UUID v5 namespace for business keys. Picked once and
 /// frozen — changing it would re-key every persisted graph.
-const UA_UUID_NAMESPACE: Uuid =
-    Uuid::from_u128(0xb3b8d6f1_0000_0000_a000_000000000000);
+const UA_UUID_NAMESPACE: Uuid = Uuid::from_u128(0xb3b8d6f1_0000_0000_a000_000000000000);
 
 pub fn uuid_for_key(key: &str) -> Uuid {
     Uuid::new_v5(&UA_UUID_NAMESPACE, key.as_bytes())
@@ -273,10 +270,7 @@ enum IndexState {
     /// Mmap'd cold-open view. `model` is the model we believe the
     /// view answers for; if a future query asks for a different model
     /// we drop the view and rebuild.
-    View {
-        index: Index,
-        model: String,
-    },
+    View { index: Index, model: String },
 }
 
 /// Above this size, a cold-open dump is spilled to a tempfile
@@ -535,8 +529,7 @@ impl EmbeddingsState {
         }
         let dim = self.rows[model_rows[0]].vector.len();
         let options = build_index_options(dim);
-        let index = Index::new(&options)
-            .map_err(|e| Error::Hnsw(format!("usearch new: {e}")))?;
+        let index = Index::new(&options).map_err(|e| Error::Hnsw(format!("usearch new: {e}")))?;
         index
             .reserve(model_rows.len().max(16))
             .map_err(|e| Error::Hnsw(format!("usearch reserve: {e}")))?;
@@ -672,8 +665,8 @@ impl Storage {
                     meta = serde_json::from_slice(&bytes)?;
                 }
                 entry::ID_MAP_BINCODE => {
-                    id_map = bincode::deserialize(&bytes)
-                        .map_err(|e| Error::Bincode(e.to_string()))?;
+                    id_map =
+                        bincode::deserialize(&bytes).map_err(|e| Error::Bincode(e.to_string()))?;
                 }
                 entry::GRAPH_MSGPACK => {
                     graph_msgpack = Some(bytes);
@@ -1014,9 +1007,11 @@ impl Storage {
         // Vertex properties.
         for v in &vertices {
             let props = match live
-                .get(SpecificVertexQuery::single(v.id).properties().map_err(|e| {
-                    Error::Graph(format!("dump vertex properties: {e}"))
-                })?)
+                .get(
+                    SpecificVertexQuery::single(v.id)
+                        .properties()
+                        .map_err(|e| Error::Graph(format!("dump vertex properties: {e}")))?,
+                )
                 .map_err(|e| Error::Graph(format!("dump vertex properties: {e}")))?
                 .pop()
             {
@@ -1119,9 +1114,8 @@ impl Storage {
         // them up. `BulkInsertItem::Vertex` requires the UUID; the id
         // also has to be deterministic (UUID v5 of the business key).
         let mut id_map = self.id_map.write().await;
-        let mut items: Vec<BulkInsertItem> = Vec::with_capacity(
-            graph.nodes.len() * 6 + graph.edges.len() * 3,
-        );
+        let mut items: Vec<BulkInsertItem> =
+            Vec::with_capacity(graph.nodes.len() * 6 + graph.edges.len() * 3);
         let key_id_prop = unsafe { Identifier::new_unchecked("node_key") };
         let name_prop = unsafe { Identifier::new_unchecked("name") };
         let name_lower_prop = unsafe { Identifier::new_unchecked("name_lower") };
@@ -1525,11 +1519,7 @@ impl Storage {
     /// requires each token to appear in *some* indexable property
     /// (`name_lower` / `summary_lower` / `tags_text`). The downstream
     /// fuzzy ranker in [`ua_search`] re-orders the candidate set.
-    pub async fn search_nodes(
-        &self,
-        query: &str,
-        limit: usize,
-    ) -> Result<Vec<String>, Error> {
+    pub async fn search_nodes(&self, query: &str, limit: usize) -> Result<Vec<String>, Error> {
         let tokens: Vec<String> = query
             .split_whitespace()
             .filter(|t| !t.is_empty())
@@ -1590,9 +1580,9 @@ impl Storage {
                     }
                 }
             }
-            let all_match = tokens.iter().all(|t| {
-                name_l.contains(t) || summary_l.contains(t) || tags_t.contains(t)
-            });
+            let all_match = tokens
+                .iter()
+                .all(|t| name_l.contains(t) || summary_l.contains(t) || tags_t.contains(t));
             if all_match && !key.is_empty() {
                 hits.push(key);
                 if hits.len() >= limit {
@@ -1606,18 +1596,14 @@ impl Storage {
     /// `(target, edge_type)` pairs reachable from `node_id`.
     ///
     /// Lock order: `id_map` → `graph` (canonical, see [`Storage`]).
-    pub async fn outgoing_edges(
-        &self,
-        node_id: &str,
-    ) -> Result<Vec<(String, String)>, Error> {
+    pub async fn outgoing_edges(&self, node_id: &str) -> Result<Vec<(String, String)>, Error> {
         let id_map = self.id_map.read().await;
         let live = self.graph.lock().await;
         let Some(&src) = id_map.get(node_id) else {
             return Ok(Vec::new());
         };
         // Pipe vertex -> outbound edges.
-        let inverse: HashMap<Uuid, String> =
-            id_map.iter().map(|(k, v)| (*v, k.clone())).collect();
+        let inverse: HashMap<Uuid, String> = id_map.iter().map(|(k, v)| (*v, k.clone())).collect();
         let q: IndraQuery = SpecificVertexQuery::single(src)
             .outbound()
             .map_err(|e| Error::Graph(format!("outgoing query: {e}")))?
@@ -1647,11 +1633,7 @@ impl Storage {
     /// backend doesn't have a SQL "table" to create, so this method
     /// only records the `(model, dim)` mapping and rejects mismatching
     /// dims on subsequent calls.
-    pub async fn ensure_embeddings_table(
-        &self,
-        model: &str,
-        dim: usize,
-    ) -> Result<(), Error> {
+    pub async fn ensure_embeddings_table(&self, model: &str, dim: usize) -> Result<(), Error> {
         let mut st = self.embeddings.write().await;
         if let Some(existing) = st.dims.get(model) {
             if existing.dim != dim {
@@ -1677,7 +1659,10 @@ impl Storage {
         let now = unix_now();
         st.dims.insert(
             model.to_string(),
-            EmbeddingMetaRow { dim, created_at: now },
+            EmbeddingMetaRow {
+                dim,
+                created_at: now,
+            },
         );
         Ok(())
     }
@@ -1807,10 +1792,11 @@ impl Storage {
         if drop.is_empty() {
             return Ok(());
         }
-        let drop_set: std::collections::HashSet<&str> =
-            drop.iter().map(|s| s.as_str()).collect();
+        let drop_set: std::collections::HashSet<&str> = drop.iter().map(|s| s.as_str()).collect();
         let mut cache = self.llm_cache.write().await;
-        cache.entries.retain(|k, _| !drop_set.contains(k.node_id.as_str()));
+        cache
+            .entries
+            .retain(|k, _| !drop_set.contains(k.node_id.as_str()));
         Ok(())
     }
 
@@ -1838,9 +1824,7 @@ impl Storage {
         let mut st = self.embeddings.write().await;
 
         // 1. If a stale index hangs around for the wrong model, drop it.
-        if let IndexState::Built { model: m, .. } | IndexState::View { model: m, .. } =
-            &st.index
-        {
+        if let IndexState::Built { model: m, .. } | IndexState::View { model: m, .. } = &st.index {
             if m != model {
                 st.index = IndexState::None;
                 st.index_dirty = true;
@@ -1941,7 +1925,6 @@ impl Storage {
         }
         Ok(())
     }
-
 }
 
 // ---- helpers ---------------------------------------------------------------
@@ -2046,9 +2029,7 @@ fn build_pending_view(bytes: Vec<u8>, model: &str) -> PendingView {
 /// Spill the bytes of one usearch dump into a tempfile and return
 /// (`tempfile`, `path`). Caller stashes both — the `EmbeddingsState`
 /// keeps the tempfile alive so the `Index::view` mmap stays valid.
-fn stash_view_blob(
-    bytes: &[u8],
-) -> Result<(tempfile::NamedTempFile, PathBuf), Error> {
+fn stash_view_blob(bytes: &[u8]) -> Result<(tempfile::NamedTempFile, PathBuf), Error> {
     let tmp = tempfile::Builder::new()
         .prefix("ua-usearch-view-")
         .suffix(".usearch")
@@ -2078,8 +2059,7 @@ fn stash_view_blob(
 /// drift; this is the same staleness window we already accepted for
 /// fingerprints.
 fn build_dump_from_rows(rows: &[EmbeddingRow], model: &str) -> Result<Vec<u8>, Error> {
-    let model_rows: Vec<&EmbeddingRow> =
-        rows.iter().filter(|r| r.model == model).collect();
+    let model_rows: Vec<&EmbeddingRow> = rows.iter().filter(|r| r.model == model).collect();
     if model_rows.is_empty() {
         return Err(Error::Hnsw(format!(
             "no rows registered for model `{model}` — nothing to dump"
@@ -2301,7 +2281,10 @@ fn edge_type_str(t: EdgeType) -> &'static str {
 }
 
 fn parse_edge_type(s: &str) -> Option<EdgeType> {
-    EdgeType::ALL.iter().copied().find(|t| edge_type_str(*t) == s)
+    EdgeType::ALL
+        .iter()
+        .copied()
+        .find(|t| edge_type_str(*t) == s)
 }
 
 fn complexity_str(c: ua_core::Complexity) -> &'static str {
@@ -2394,9 +2377,7 @@ mod tests {
         // Build a tiny graph with 4 file nodes (so node ids resolve
         // through `id_map`); keep it minimal — we only care about
         // embedding round-trip.
-        use ua_core::{
-            Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-        };
+        use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
         let mk_node = |id: &str, name: &str| GraphNode {
             id: id.into(),
             node_type: NodeType::File,
@@ -2519,9 +2500,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let layout = ProjectLayout::under(dir.path());
 
-        use ua_core::{
-            Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-        };
+        use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
         let mk_node = |id: &str| GraphNode {
             id: id.into(),
             node_type: NodeType::File,
@@ -2676,9 +2655,7 @@ mod tests {
     async fn concurrent_save_kind_and_save_graph_does_not_deadlock() {
         use std::sync::Arc;
         use std::time::Duration;
-        use ua_core::{
-            Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta,
-        };
+        use ua_core::{Complexity, GraphKind, GraphNode, KnowledgeGraph, NodeType, ProjectMeta};
 
         let dir = tempfile::tempdir().unwrap();
         let layout = ProjectLayout::under(dir.path());
@@ -2717,10 +2694,7 @@ mod tests {
         // Seed a couple of embeddings so save_kind has real dump
         // work to do — exercises the same critical sections that
         // were tangled before the fix.
-        storage
-            .ensure_embeddings_table("m", 3)
-            .await
-            .unwrap();
+        storage.ensure_embeddings_table("m", 3).await.unwrap();
         storage
             .upsert_node_embedding("n:a", "m", &[1.0, 0.0, 0.0], "h")
             .await
@@ -2749,13 +2723,10 @@ mod tests {
         // 5s is generous — both loops together are < 500ms on a cold
         // CI runner. If we time out, something is genuinely
         // deadlocked rather than just slow.
-        let res = tokio::time::timeout(
-            Duration::from_secs(5),
-            async move {
-                save_kind_task.await.unwrap();
-                save_graph_task.await.unwrap();
-            },
-        )
+        let res = tokio::time::timeout(Duration::from_secs(5), async move {
+            save_kind_task.await.unwrap();
+            save_graph_task.await.unwrap();
+        })
         .await;
         assert!(
             res.is_ok(),
@@ -2778,8 +2749,7 @@ mod tests {
         let bytes = bincode::serialize(&header).unwrap();
 
         let mut st = EmbeddingsState::default();
-        let err = decode_embeddings(&bytes, &mut st)
-            .expect_err("future header version must error");
+        let err = decode_embeddings(&bytes, &mut st).expect_err("future header version must error");
         match err {
             Error::Schema(msg) => {
                 assert!(
@@ -2883,10 +2853,7 @@ mod tests {
         let pv = build_pending_view(big, "m");
         match pv {
             PendingView::Spilled { path, .. } => {
-                assert!(
-                    path.exists(),
-                    "spilled tempfile must exist on disk"
-                );
+                assert!(path.exists(), "spilled tempfile must exist on disk");
             }
             PendingView::Bytes(_) => {
                 panic!("over-cap dump must spill immediately")

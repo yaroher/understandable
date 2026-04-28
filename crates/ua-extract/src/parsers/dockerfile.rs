@@ -32,7 +32,11 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
                 services.push(service(stage_name, Some(&image), line_no));
             }
             "RUN" | "CMD" | "ENTRYPOINT" => {
-                let summary = rest.split_ascii_whitespace().next().unwrap_or("").to_string();
+                let summary = rest
+                    .split_ascii_whitespace()
+                    .next()
+                    .unwrap_or("")
+                    .to_string();
                 let name = if summary.is_empty() {
                     format!("{instr}-{line_no}")
                 } else {
@@ -159,11 +163,15 @@ mod tests {
         let start = std::time::Instant::now();
         let a = analyze(&src);
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 500, "dockerfile parse took {elapsed:?}");
+        assert!(
+            elapsed.as_millis() < 500,
+            "dockerfile parse took {elapsed:?}"
+        );
         assert!(a.steps.is_some());
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_dockerfile_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

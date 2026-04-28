@@ -88,9 +88,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     let storage = Storage::open(&layout).await?;
     let graph = storage.load_graph().await?;
     if graph.nodes.is_empty() {
-        anyhow::bail!(
-            "no graph found — run `understandable analyze` before embedding"
-        );
+        anyhow::bail!("no graph found — run `understandable analyze` before embedding");
     }
 
     let model = resolve_model_name_from_resolved(&resolved);
@@ -163,7 +161,11 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     let mut joinset: tokio::task::JoinSet<EmbedTaskOutput> = tokio::task::JoinSet::new();
 
     for chunk in work.chunks(resolved.batch_size) {
-        let permit = sem.clone().acquire_owned().await.expect("semaphore not closed");
+        let permit = sem
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("semaphore not closed");
         let provider = provider.clone();
         // Stash the (node_id, hash) pairs so the upsert step can match
         // returned vectors back up. Texts are owned so the spawned task
@@ -225,9 +227,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
                 .upsert_node_embedding(node_id, &model, vec, hash)
                 .await
             {
-                errors.push(anyhow::anyhow!(
-                    "upsert failed for node `{node_id}`: {e}"
-                ));
+                errors.push(anyhow::anyhow!("upsert failed for node `{node_id}`: {e}"));
                 batch_failed = true;
                 break;
             }
@@ -252,9 +252,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
             errors.len()
         );
     }
-    println!(
-        "embedded {done}/{total} node(s) into `{model}` (dim={dim})"
-    );
+    println!("embedded {done}/{total} node(s) into `{model}` (dim={dim})");
     Ok(())
 }
 

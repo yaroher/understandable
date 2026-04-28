@@ -61,11 +61,8 @@ pub fn structural_hash(analysis: &StructuralAnalysis) -> String {
     // Build the exported-name set up front so each function entry can
     // record whether it's part of the public surface — that's the
     // closest stand-in we have for the TS `is_exported` flag.
-    let exported_names: std::collections::HashSet<&str> = analysis
-        .exports
-        .iter()
-        .map(|e| e.name.as_str())
-        .collect();
+    let exported_names: std::collections::HashSet<&str> =
+        analysis.exports.iter().map(|e| e.name.as_str()).collect();
 
     // Functions: `name:arity:is_exported`. Sort by `(name, arity)` so
     // overloads (rare in Rust but common in TS/JS/PHP) stay stable.
@@ -113,11 +110,7 @@ pub fn structural_hash(analysis: &StructuralAnalysis) -> String {
     // reflows ( `{ A, B }` → `{\n  A,\n  B,\n}` ) so they're excluded;
     // the source string is the part that changes the dependency graph.
     hasher.update(b"IMPORTS\n");
-    let mut imports: Vec<&str> = analysis
-        .imports
-        .iter()
-        .map(|i| i.source.as_str())
-        .collect();
+    let mut imports: Vec<&str> = analysis.imports.iter().map(|i| i.source.as_str()).collect();
     imports.sort();
     imports.dedup();
     for src in imports {
@@ -128,11 +121,7 @@ pub fn structural_hash(analysis: &StructuralAnalysis) -> String {
     // Exports: name only — the line number is positional and would
     // flip on any vertical edit.
     hasher.update(b"EXPORTS\n");
-    let mut exports: Vec<&str> = analysis
-        .exports
-        .iter()
-        .map(|e| e.name.as_str())
-        .collect();
+    let mut exports: Vec<&str> = analysis.exports.iter().map(|e| e.name.as_str()).collect();
     exports.sort();
     exports.dedup();
     for name in exports {
@@ -145,8 +134,7 @@ pub fn structural_hash(analysis: &StructuralAnalysis) -> String {
     // change".
     if let Some(secs) = analysis.sections.as_ref() {
         hasher.update(b"SECTIONS\n");
-        let mut names: Vec<(&str, u32)> =
-            secs.iter().map(|s| (s.name.as_str(), s.level)).collect();
+        let mut names: Vec<(&str, u32)> = secs.iter().map(|s| (s.name.as_str(), s.level)).collect();
         names.sort();
         for (name, level) in names {
             hasher.update(name.as_bytes());
@@ -346,19 +334,23 @@ mod tests {
 
     #[test]
     fn sections_factor_into_hash() {
-        let mut a = StructuralAnalysis::default();
-        a.sections = Some(vec![SectionInfo {
-            name: "Intro".to_string(),
-            level: 1,
-            line_range: (1, 10),
-        }]);
+        let a = StructuralAnalysis {
+            sections: Some(vec![SectionInfo {
+                name: "Intro".to_string(),
+                level: 1,
+                line_range: (1, 10),
+            }]),
+            ..Default::default()
+        };
 
-        let mut b = StructuralAnalysis::default();
-        b.sections = Some(vec![SectionInfo {
-            name: "Outro".to_string(),
-            level: 1,
-            line_range: (1, 10),
-        }]);
+        let b = StructuralAnalysis {
+            sections: Some(vec![SectionInfo {
+                name: "Outro".to_string(),
+                level: 1,
+                line_range: (1, 10),
+            }]),
+            ..Default::default()
+        };
 
         assert_ne!(structural_hash(&a), structural_hash(&b));
     }

@@ -10,9 +10,9 @@ use std::path::Path;
 
 use clap::{Args as ClapArgs, ValueEnum};
 use ua_core::GraphNode;
+use ua_core::ProjectSettings;
 use ua_llm::{EmbeddingProvider, OpenAiEmbeddings, OLLAMA_EMBED_DEFAULT};
 use ua_persist::{ProjectLayout, Storage};
-use ua_core::ProjectSettings;
 use ua_search::{SearchEngine, SearchOptions};
 
 use crate::commands::embed::{resolve_model_name_from_resolved, ResolvedEmbed};
@@ -93,11 +93,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_semantic(
-    args: Args,
-    storage: &Storage,
-    project_path: &Path,
-) -> anyhow::Result<()> {
+async fn run_semantic(args: Args, storage: &Storage, project_path: &Path) -> anyhow::Result<()> {
     // Same resolution logic as `embed` so the persisted rows can be
     // looked up under the same `model` string. Read settings from the
     // user-supplied `project_path` so `--path /elsewhere search
@@ -118,9 +114,7 @@ async fn run_semantic(
     let model = resolve_model_name_from_resolved(&resolved);
 
     if storage.embedding_count(&model).await? == 0 {
-        anyhow::bail!(
-            "no embeddings for model `{model}` — run `understandable embed` first"
-        );
+        anyhow::bail!("no embeddings for model `{model}` — run `understandable embed` first");
     }
 
     let provider = build_provider_from(&resolved)?;
@@ -131,9 +125,7 @@ async fn run_semantic(
         .next()
         .ok_or_else(|| anyhow::anyhow!("provider returned no vector for the query"))?;
 
-    let hits = storage
-        .vector_top_k(&model, &query_vec, args.limit)
-        .await?;
+    let hits = storage.vector_top_k(&model, &query_vec, args.limit).await?;
     if hits.is_empty() {
         println!("no matches");
         return Ok(());
@@ -154,9 +146,7 @@ async fn run_semantic(
 /// — the old signature dropped it on the floor and every local embed
 /// run defaulted to fastembed's hard-coded batch of 16 regardless of
 /// what `embeddings.batch_size` said in the YAML.
-pub fn build_provider_from(
-    resolved: &ResolvedEmbed,
-) -> anyhow::Result<Box<dyn EmbeddingProvider>> {
+pub fn build_provider_from(resolved: &ResolvedEmbed) -> anyhow::Result<Box<dyn EmbeddingProvider>> {
     match resolved.provider {
         EmbedProvider::Openai => {
             let mut client = OpenAiEmbeddings::new(None)?;
@@ -179,7 +169,9 @@ pub fn build_provider_from(
             }
             Ok(Box::new(client))
         }
-        EmbedProvider::Local => build_local_provider(resolved.model.as_deref(), resolved.batch_size),
+        EmbedProvider::Local => {
+            build_local_provider(resolved.model.as_deref(), resolved.batch_size)
+        }
     }
 }
 

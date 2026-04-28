@@ -102,11 +102,7 @@ pub fn format_context_for_prompt(ctx: &ChatContext) -> String {
         lines.push("## Code Components".into());
         lines.push(String::new());
         for n in &ctx.relevant_nodes {
-            lines.push(format!(
-                "### {} ({})",
-                n.name,
-                n.node_type.as_str()
-            ));
+            lines.push(format!("### {} ({})", n.name, n.node_type.as_str()));
             if let Some(p) = &n.file_path {
                 lines.push(format!("- **File:** {p}"));
             }
@@ -130,13 +126,22 @@ pub fn format_context_for_prompt(ctx: &ChatContext) -> String {
     }
 
     if !ctx.relevant_edges.is_empty() {
-        let by_id: BTreeMap<&str, &GraphNode> =
-            ctx.relevant_nodes.iter().map(|n| (n.id.as_str(), n)).collect();
+        let by_id: BTreeMap<&str, &GraphNode> = ctx
+            .relevant_nodes
+            .iter()
+            .map(|n| (n.id.as_str(), n))
+            .collect();
         lines.push("## Relationships".into());
         lines.push(String::new());
         for e in &ctx.relevant_edges {
-            let src = by_id.get(e.source.as_str()).map(|n| n.name.as_str()).unwrap_or(&e.source);
-            let tgt = by_id.get(e.target.as_str()).map(|n| n.name.as_str()).unwrap_or(&e.target);
+            let src = by_id
+                .get(e.source.as_str())
+                .map(|n| n.name.as_str())
+                .unwrap_or(&e.source);
+            let tgt = by_id
+                .get(e.target.as_str())
+                .map(|n| n.name.as_str())
+                .unwrap_or(&e.target);
             let mut line = format!("- {src} --[{}]--> {tgt}", edge_type_label(e.edge_type));
             if let Some(d) = &e.description {
                 line.push_str(": ");

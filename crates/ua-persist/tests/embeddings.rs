@@ -1,6 +1,6 @@
 use ua_core::{
-    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph,
-    Layer, NodeType, ProjectMeta, TourStep,
+    Complexity, EdgeDirection, EdgeType, GraphEdge, GraphKind, GraphNode, KnowledgeGraph, Layer,
+    NodeType, ProjectMeta, TourStep,
 };
 use ua_persist::Storage;
 
@@ -100,7 +100,7 @@ async fn embeddings_roundtrip_and_vector_search() {
     assert!(hits[0].distance < hits.last().unwrap().distance);
 
     // Forget one, count drops.
-    s.forget_embeddings(&vec!["file:src/auth.rs".to_string()])
+    s.forget_embeddings(&["file:src/auth.rs".to_string()])
         .await
         .unwrap();
     assert_eq!(s.embedding_count("test-model").await.unwrap(), 1);

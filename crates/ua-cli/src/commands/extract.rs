@@ -422,10 +422,7 @@ mod tests {
                 assert_eq!(batch_files[0].size_lines, Some(234));
                 assert_eq!(batch_files[0].file_category.as_deref(), Some("source"));
                 let import_data = batch_import_data.expect("import data present");
-                assert_eq!(
-                    import_data.get("src/auth.ts"),
-                    Some(&json!(["src/db.ts"]))
-                );
+                assert_eq!(import_data.get("src/auth.ts"), Some(&json!(["src/db.ts"])));
             }
             ExtractRequest::Minimal { .. } => panic!("expected TsCompat variant"),
         }
@@ -509,8 +506,7 @@ mod tests {
         };
 
         // Without force: huge.rs is gated out.
-        let (jobs, skipped) =
-            jobs_from_ts_compat(project_root.clone(), make_batch(), None, false);
+        let (jobs, skipped) = jobs_from_ts_compat(project_root.clone(), make_batch(), None, false);
         assert_eq!(skipped, 1);
         assert_eq!(jobs.len(), 1);
         assert_eq!(jobs[0].display_path, "small.rs");
@@ -534,8 +530,7 @@ mod tests {
             "src/a.rs": ["src/b.rs", "src/c.rs"],
             "src/other.rs": ["src/d.rs"]
         });
-        let (jobs, _) =
-            jobs_from_ts_compat(project_root, batch, Some(import_data), false);
+        let (jobs, _) = jobs_from_ts_compat(project_root, batch, Some(import_data), false);
         assert_eq!(jobs.len(), 1);
         assert_eq!(
             jobs[0].batch_import_data,

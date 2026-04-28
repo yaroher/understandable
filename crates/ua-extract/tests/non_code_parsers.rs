@@ -63,8 +63,7 @@ service UserService { rpc Get (User) returns (User); }
 "#;
     let a = r.analyze_file("protobuf", "user.proto", src).unwrap();
     let defs = a.definitions.expect("proto definitions present");
-    let kinds: std::collections::HashSet<&str> =
-        defs.iter().map(|d| d.kind.as_str()).collect();
+    let kinds: std::collections::HashSet<&str> = defs.iter().map(|d| d.kind.as_str()).collect();
     assert!(kinds.contains("message"));
     assert!(kinds.contains("enum"));
     assert!(kinds.contains("service"));
@@ -97,7 +96,9 @@ source ./lib/common.sh
 "#;
     let a = r.analyze_file("shell", "tool.sh", src).unwrap();
     let defs = a.definitions.expect("shell defs present");
-    assert!(defs.iter().any(|d| d.name == "greet" && d.kind == "function"));
+    assert!(defs
+        .iter()
+        .any(|d| d.name == "greet" && d.kind == "function"));
     assert!(a.imports.iter().any(|i| i.source == "./lib/common.sh"));
 }
 
@@ -131,7 +132,9 @@ data "aws_caller_identity" "current" {}
 "#;
     let a = r.analyze_file("terraform", "main.tf", src).unwrap();
     let resources = a.resources.expect("terraform resources present");
-    assert!(resources.iter().any(|r| r.kind == "aws_s3_bucket" && r.name == "logs"));
+    assert!(resources
+        .iter()
+        .any(|r| r.kind == "aws_s3_bucket" && r.name == "logs"));
     let defs = a.definitions.expect("terraform defs present");
     let pairs: Vec<(&str, &str)> = defs
         .iter()

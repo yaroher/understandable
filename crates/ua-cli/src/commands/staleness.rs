@@ -31,7 +31,7 @@ use std::path::Path;
 
 use clap::Args as ClapArgs;
 use serde::Serialize;
-use ua_persist::staleness::{report as staleness_report, current_git_head, StalenessStatus};
+use ua_persist::staleness::{current_git_head, report as staleness_report, StalenessStatus};
 use ua_persist::{ProjectLayout, Storage};
 
 #[derive(ClapArgs, Debug)]
@@ -78,7 +78,11 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     let storage = Storage::open(&layout).await?;
     let graph = storage.load_graph().await?;
     let persisted = graph.project.git_commit_hash.trim().to_string();
-    let persisted_opt = if persisted.is_empty() { None } else { Some(persisted.as_str()) };
+    let persisted_opt = if persisted.is_empty() {
+        None
+    } else {
+        Some(persisted.as_str())
+    };
 
     let current = current_git_head(project_path);
     let report = staleness_report(persisted_opt, current.as_deref());
@@ -98,7 +102,10 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
             );
             std::process::exit(0);
         }
-        StalenessStatus::Stale { persisted, current: cur } => {
+        StalenessStatus::Stale {
+            persisted,
+            current: cur,
+        } => {
             let drift = git_diff_count(project_path, &persisted, &cur).ok();
             emit(
                 args.json,
@@ -207,7 +214,10 @@ mod tests {
         let s = serde_json::to_string(&p).expect("serialize");
         let v: serde_json::Value = serde_json::from_str(&s).expect("parse");
         assert_eq!(v.get("stale").and_then(|x| x.as_bool()), Some(true));
-        assert_eq!(v.get("current_commit").and_then(|x| x.as_str()), Some("aaa"));
+        assert_eq!(
+            v.get("current_commit").and_then(|x| x.as_str()),
+            Some("aaa")
+        );
         assert_eq!(v.get("graph_commit").and_then(|x| x.as_str()), Some("bbb"));
         assert_eq!(v.get("drift_count").and_then(|x| x.as_u64()), Some(3));
     }

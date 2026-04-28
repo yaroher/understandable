@@ -12,27 +12,23 @@ pub mod plugin;
 pub mod settings;
 pub mod validate;
 
-pub use edge::{EdgeType, GraphEdge, EdgeDirection};
+pub use edge::{EdgeDirection, EdgeType, GraphEdge};
 pub use error::Error;
-pub use graph::{KnowledgeGraph, Layer, TourStep, GraphKind};
-pub use meta::{
-    AnalysisMeta, ProjectConfig, ProjectMeta, ThemeConfig,
-};
-pub use node::{
-    Complexity, DomainEntryType, DomainMeta, GraphNode, KnowledgeMeta, NodeType,
-};
+pub use graph::{GraphKind, KnowledgeGraph, Layer, TourStep};
+pub use meta::{AnalysisMeta, ProjectConfig, ProjectMeta, ThemeConfig};
+pub use node::{Complexity, DomainEntryType, DomainMeta, GraphNode, KnowledgeMeta, NodeType};
 pub use plugin::{
-    CallGraphEntry, ClassDecl, DefinitionInfo, EndpointInfo, ExportDecl, FunctionDecl,
-    ImportDecl, ImportResolution, ReferenceResolution, ResourceInfo, SectionInfo,
-    ServiceInfo, StepInfo, StructuralAnalysis,
+    CallGraphEntry, ClassDecl, DefinitionInfo, EndpointInfo, ExportDecl, FunctionDecl, ImportDecl,
+    ImportResolution, ReferenceResolution, ResourceInfo, SectionInfo, ServiceInfo, StepInfo,
+    StructuralAnalysis,
 };
 pub use settings::{
     DashboardSettings, EmbeddingSettings, GitSettings, IgnoreSettings, IncrementalSettings,
     LlmSettings, ProjectIdent, ProjectSettings, StorageSettings,
 };
 pub use validate::{
-    ComplexityHistogram, Severity, ValidationError, ValidationIssue, ValidationReport,
-    ValidationStats, validate_graph,
+    validate_graph, ComplexityHistogram, Severity, ValidationError, ValidationIssue,
+    ValidationReport, ValidationStats,
 };
 
 /// Crate-level result alias.

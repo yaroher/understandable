@@ -170,14 +170,27 @@ async fn run_llm_enrichment(
 
     let total_articles = articles.len();
     for (article_id, title, body) in articles.into_iter().take(cap) {
-        let permit = sem.clone().acquire_owned().await.expect("semaphore not closed");
+        let permit = sem
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("semaphore not closed");
         let storage = storage.clone();
         let client = client.clone();
         let model = model.clone();
         let catalog = catalog.clone();
         joinset.spawn(async move {
             let _permit = permit;
-            process_one_article(&article_id, &title, &body, &catalog, &client, model.as_deref(), &storage).await
+            process_one_article(
+                &article_id,
+                &title,
+                &body,
+                &catalog,
+                &client,
+                model.as_deref(),
+                &storage,
+            )
+            .await
         });
     }
 
@@ -239,9 +252,7 @@ async fn run_llm_enrichment(
         .to_string();
     if totals.is_zero() {
         if total > 0 {
-            println!(
-                "llm-enriched {total} articles (cached: {hits}/{total}, +{appended} edges)"
-            );
+            println!("llm-enriched {total} articles (cached: {hits}/{total}, +{appended} edges)");
         }
     } else {
         let usd = totals.estimate_usd(&model_name);
@@ -491,14 +502,9 @@ mod tests {
 
     #[test]
     fn parses_with_llm_and_max_articles() {
-        let parsed = Harness::try_parse_from([
-            "test",
-            "wiki/",
-            "--with-llm",
-            "--llm-max-articles",
-            "5",
-        ])
-        .expect("parse");
+        let parsed =
+            Harness::try_parse_from(["test", "wiki/", "--with-llm", "--llm-max-articles", "5"])
+                .expect("parse");
         assert!(parsed.args.with_llm);
         assert_eq!(parsed.args.llm_max_articles, 5);
         assert_eq!(parsed.args.wiki, PathBuf::from("wiki/"));
@@ -545,7 +551,8 @@ mod tests {
 
     #[test]
     fn parse_edges_strips_fence() {
-        let raw = "```json\n{\"edges\":[{\"target\":\"article:x\",\"edge_type\":\"builds_on\"}]}\n```";
+        let raw =
+            "```json\n{\"edges\":[{\"target\":\"article:x\",\"edge_type\":\"builds_on\"}]}\n```";
         let edges = parse_edges(raw, "article:y").expect("parse");
         assert_eq!(edges.len(), 1);
         assert_eq!(edges[0].edge_type, EdgeType::BuildsOn);

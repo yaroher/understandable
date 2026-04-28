@@ -46,13 +46,8 @@ async fn test_source_returns_slice() {
     let file = root.join("foo.txt");
     std::fs::write(&file, "alpha\nbeta\ngamma\ndelta\nepsilon\n").unwrap();
 
-    let state = AppState::with_graphs_and_root(
-        empty_graph(),
-        None,
-        None,
-        PathBuf::new(),
-        root.clone(),
-    );
+    let state =
+        AppState::with_graphs_and_root(empty_graph(), None, None, PathBuf::new(), root.clone());
     let (base, handle) = boot(state).await;
 
     let url = format!("{base}/api/source?path=foo.txt&start=2&end=4");
@@ -63,7 +58,10 @@ async fn test_source_returns_slice() {
         .get("content-type")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
-    assert!(ct.starts_with("text/plain"), "unexpected content-type: {ct}");
+    assert!(
+        ct.starts_with("text/plain"),
+        "unexpected content-type: {ct}"
+    );
     let body = resp.text().await.unwrap();
     assert_eq!(body, "beta\ngamma\ndelta");
 
@@ -88,13 +86,8 @@ async fn test_source_rejects_traversal() {
     let outside_dir = tempfile::tempdir().unwrap();
     std::fs::write(outside_dir.path().join("secret.txt"), "shh\n").unwrap();
 
-    let state = AppState::with_graphs_and_root(
-        empty_graph(),
-        None,
-        None,
-        PathBuf::new(),
-        root.clone(),
-    );
+    let state =
+        AppState::with_graphs_and_root(empty_graph(), None, None, PathBuf::new(), root.clone());
     let (base, handle) = boot(state).await;
 
     // 1. Direct `..` traversal — rejected up front.
@@ -119,7 +112,9 @@ async fn test_source_rejects_traversal() {
 
     // 3. Empty path — also a 400 so callers can't trick the API into a
     //    no-op read of the project root itself.
-    let resp = reqwest::get(format!("{base}/api/source?path=")).await.unwrap();
+    let resp = reqwest::get(format!("{base}/api/source?path="))
+        .await
+        .unwrap();
     assert_eq!(resp.status(), reqwest::StatusCode::BAD_REQUEST);
 
     handle.abort();

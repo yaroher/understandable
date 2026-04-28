@@ -94,12 +94,8 @@ fn match_create(line: &str) -> Option<(&'static str, String)> {
 }
 
 fn find_original_token<'a>(line: &'a str, lower_token: &str) -> Option<&'a str> {
-    for tok in line.split(|c: char| c.is_whitespace() || c == '(' || c == ';') {
-        if tok.eq_ignore_ascii_case(lower_token) {
-            return Some(tok);
-        }
-    }
-    None
+    line.split(|c: char| c.is_whitespace() || c == '(' || c == ';')
+        .find(|tok| tok.eq_ignore_ascii_case(lower_token))
 }
 
 #[cfg(test)]
@@ -172,7 +168,9 @@ CREATE UNIQUE INDEX users_email_idx ON users(email);
         let a = analyze(src);
         let defs = a.definitions.unwrap();
         assert!(defs.iter().any(|d| d.name == "users" && d.kind == "table"));
-        assert!(defs.iter().any(|d| d.name == "idx_users" && d.kind == "index"));
+        assert!(defs
+            .iter()
+            .any(|d| d.name == "idx_users" && d.kind == "index"));
     }
 
     #[test]
@@ -189,6 +187,7 @@ CREATE UNIQUE INDEX users_email_idx ON users(email);
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_sql_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

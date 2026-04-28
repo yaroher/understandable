@@ -62,7 +62,7 @@ pub async fn run(args: Args, project_path: &Path) -> anyhow::Result<()> {
     } else {
         serde_json::to_string(&graph)?
     };
-    if args.out == PathBuf::from("-") {
+    if args.out == std::path::Path::new("-") {
         std::io::stdout().write_all(json.as_bytes())?;
         std::io::stdout().write_all(b"\n")?;
     } else {

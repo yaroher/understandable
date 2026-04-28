@@ -92,9 +92,13 @@ fn resolve_auto_open(open: bool, no_open: bool, yaml_default: bool) -> anyhow::R
 
 pub async fn run(args: Args, project: &Path) -> anyhow::Result<()> {
     let settings = ProjectSettings::load_or_default(project)?;
-    let host = args
-        .host
-        .unwrap_or_else(|| settings.dashboard.host.parse().unwrap_or(IpAddr::from([127, 0, 0, 1])));
+    let host = args.host.unwrap_or_else(|| {
+        settings
+            .dashboard
+            .host
+            .parse()
+            .unwrap_or(IpAddr::from([127, 0, 0, 1]))
+    });
     let port = args.port.unwrap_or(settings.dashboard.port);
     let auto_open = resolve_auto_open(args.open, args.no_open, settings.dashboard.auto_open)?;
     let addr = SocketAddr::new(host, port);

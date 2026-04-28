@@ -31,9 +31,7 @@ fn strip_bom(input: &str) -> &str {
 fn build_top_key_index(content: &str) -> HashMap<String, u32> {
     let mut idx: HashMap<String, u32> = HashMap::new();
     for (line_no, line) in content.lines().enumerate() {
-        if line
-            .starts_with(|c: char| c.is_whitespace() || c == '#')
-        {
+        if line.starts_with(|c: char| c.is_whitespace() || c == '#') {
             continue;
         }
         if line.is_empty() {
@@ -120,7 +118,12 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
             if let Some(idx) = trimmed.find(':') {
                 let key = trimmed[..idx].trim();
                 if !key.is_empty() && !key.contains(' ') {
-                    defs.push(def_with_fields(key.to_string(), "section", line_no, Vec::new()));
+                    defs.push(def_with_fields(
+                        key.to_string(),
+                        "section",
+                        line_no,
+                        Vec::new(),
+                    ));
                 }
             }
         }
@@ -225,11 +228,15 @@ mod tests {
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_yaml_non_utf8_bytes_returns_typed_error() {
         // analyze takes &str — non-UTF-8 bytes can never reach it without a
         // prior std::str::from_utf8 conversion, which itself returns Err.
         let bad: &[u8] = b"\xFF\xFE\x00\x00name: demo\n";
         let res = std::str::from_utf8(bad);
-        assert!(res.is_err(), "non-utf8 bytes are caught at the &str boundary");
+        assert!(
+            res.is_err(),
+            "non-utf8 bytes are caught at the &str boundary"
+        );
     }
 }

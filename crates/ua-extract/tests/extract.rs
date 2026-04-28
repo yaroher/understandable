@@ -1,7 +1,7 @@
 //! Sanity tests against tiny real-world snippets per language.
 
-use ua_extract::{default_registry, LanguageRegistry};
 use std::path::Path;
+use ua_extract::{default_registry, LanguageRegistry};
 
 fn registry() -> ua_extract::PluginRegistry {
     default_registry()
@@ -127,7 +127,7 @@ impl Counter {
     assert!(fn_names.contains(&"increment"), "got {:?}", fn_names);
 
     let cls_names: Vec<&str> = a.classes.iter().map(|c| c.name.as_str()).collect();
-    assert!(cls_names.iter().any(|n| *n == "Counter"));
+    assert!(cls_names.contains(&"Counter"));
 
     assert_eq!(a.imports.len(), 2);
 }

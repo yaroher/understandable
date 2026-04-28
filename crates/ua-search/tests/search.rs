@@ -1,7 +1,5 @@
 use ua_core::{Complexity, GraphNode, NodeType};
-use ua_search::{
-    build_chat_context, format_context_for_prompt, SearchEngine, SearchOptions,
-};
+use ua_search::{build_chat_context, format_context_for_prompt, SearchEngine, SearchOptions};
 
 fn node(id: &str, name: &str, tags: &[&str], summary: &str) -> GraphNode {
     GraphNode {
@@ -22,8 +20,18 @@ fn node(id: &str, name: &str, tags: &[&str], summary: &str) -> GraphNode {
 #[test]
 fn search_finds_node_by_name() {
     let engine = SearchEngine::new(vec![
-        node("function:src/a.rs:login", "login", &["auth"], "logs the user in"),
-        node("function:src/b.rs:render", "render", &["ui"], "renders the page"),
+        node(
+            "function:src/a.rs:login",
+            "login",
+            &["auth"],
+            "logs the user in",
+        ),
+        node(
+            "function:src/b.rs:render",
+            "render",
+            &["ui"],
+            "renders the page",
+        ),
     ]);
     let results = engine.search("login", &SearchOptions::default());
     assert!(!results.is_empty());
@@ -66,9 +74,7 @@ fn search_returns_empty_for_blank_query() {
 
 #[test]
 fn chat_context_expands_one_hop() {
-    use ua_core::{
-        EdgeDirection, EdgeType, GraphEdge, GraphKind, KnowledgeGraph, ProjectMeta,
-    };
+    use ua_core::{EdgeDirection, EdgeType, GraphEdge, GraphKind, KnowledgeGraph, ProjectMeta};
 
     let n1 = node("function:src/a.rs:login", "login", &["auth"], "");
     let n2 = node("function:src/b.rs:helper", "helper", &[], "");

@@ -31,9 +31,7 @@ pub struct FrameworkRegistry {
 
 impl FrameworkRegistry {
     pub fn default_registry() -> Self {
-        Self {
-            items: builtins(),
-        }
+        Self { items: builtins() }
     }
 
     pub fn all(&self) -> &[FrameworkConfig] {
@@ -190,19 +188,7 @@ fn builtins() -> Vec<FrameworkConfig> {
             &["actix-web", "actix_web"],
             &["Cargo.toml"],
         ),
-        fw(
-            "axum",
-            "Axum",
-            &["rust"],
-            &["axum"],
-            &["Cargo.toml"],
-        ),
-        fw(
-            "rocket",
-            "Rocket",
-            &["rust"],
-            &["rocket"],
-            &["Cargo.toml"],
-        ),
+        fw("axum", "Axum", &["rust"], &["axum"], &["Cargo.toml"]),
+        fw("rocket", "Rocket", &["rust"], &["rocket"], &["Cargo.toml"]),
     ]
 }

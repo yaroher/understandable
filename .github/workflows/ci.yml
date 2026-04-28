@@ -23,6 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stub dashboard/dist for fmt
+        run: |
+          mkdir -p dashboard/dist
+          echo "<!doctype html><html></html>" > dashboard/dist/index.html
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -33,6 +37,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Build dashboard (rust-embed needs dist/)
+        working-directory: dashboard
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -55,6 +74,21 @@ jobs:
             experimental: true
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Build dashboard (rust-embed needs dist/)
+        working-directory: dashboard
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build (default features)
@@ -72,6 +106,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libssl-dev pkg-config build-essential
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Build dashboard (rust-embed needs dist/)
+        working-directory: dashboard
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build with all-langs + local-embeddings
@@ -84,6 +133,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Build dashboard (rust-embed needs dist/)
+        working-directory: dashboard
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --doc
@@ -93,6 +157,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - name: Build dashboard (rust-embed needs dist/)
+        working-directory: dashboard
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.83"

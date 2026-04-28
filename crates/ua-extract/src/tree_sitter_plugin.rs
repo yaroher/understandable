@@ -2,8 +2,8 @@
 //!
 //! Each language is described by a [`LangSpec`]: a tree-sitter [`Language`]
 //! + a structural query (capture names: `fn.def`, `fn.name`, `fn.params`,
-//! `cls.def`, `cls.name`, `imp.def`, `imp.source`, `imp.spec`, `exp.def`,
-//! `exp.name`) + a call query (capture names: `call.expr`, `call.callee`).
+//!   `cls.def`, `cls.name`, `imp.def`, `imp.source`, `imp.spec`, `exp.def`,
+//!   `exp.name`) + a call query (capture names: `call.expr`, `call.callee`).
 //!
 //! `analyze_file` runs the structural query, post-walks class bodies to
 //! collect methods and properties, and resolves import string literals.
@@ -180,8 +180,7 @@ impl AnalyzerPlugin for TreeSitterPlugin {
             }
             if let Some(def) = by_name.get("cls.def") {
                 if let Some(name) = by_name.get("cls.name") {
-                    let (methods, properties) =
-                        collect_class_members(*def, compiled.spec, bytes);
+                    let (methods, properties) = collect_class_members(*def, compiled.spec, bytes);
                     analysis.classes.push(ClassDecl {
                         name: text(*name, bytes).to_string(),
                         line_range: line_range(*def),
@@ -406,7 +405,11 @@ fn nearest_call_expr_ancestor<'tree>(
     for e in exprs {
         if e.start_byte() <= cs && e.end_byte() >= ce {
             best = Some(match best {
-                Some(prev) if prev.end_byte() - prev.start_byte() <= e.end_byte() - e.start_byte() => prev,
+                Some(prev)
+                    if prev.end_byte() - prev.start_byte() <= e.end_byte() - e.start_byte() =>
+                {
+                    prev
+                }
                 _ => *e,
             });
         }
@@ -557,4 +560,3 @@ fn all_specs() -> &'static [LangSpec] {
         v
     })
 }
-

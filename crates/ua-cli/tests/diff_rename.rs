@@ -39,10 +39,7 @@ fn rename_record_emits_new_path_and_drains_original() {
 fn ordinary_record_with_multiple_spaces_in_path() {
     let raw = "1 .M N... 100644 100644 100644 abc def some dir/with multiple spaces.rs\0";
     let files = parse_porcelain_v2(raw);
-    assert_eq!(
-        files,
-        vec!["some dir/with multiple spaces.rs".to_string()]
-    );
+    assert_eq!(files, vec!["some dir/with multiple spaces.rs".to_string()]);
 }
 
 /// Quoted paths — porcelain v2 with `-z` does NOT escape special chars

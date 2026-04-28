@@ -115,7 +115,9 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
                             .filter(|k| {
                                 matches!(
                                     k.as_str(),
-                                    "get" | "post" | "put"
+                                    "get"
+                                        | "post"
+                                        | "put"
                                         | "delete"
                                         | "patch"
                                         | "head"
@@ -128,8 +130,7 @@ pub fn analyze(content: &str) -> StructuralAnalysis {
                             endpoints.push(endpoint(None, path, line));
                         } else {
                             for v in verbs {
-                                endpoints
-                                    .push(endpoint(Some(&v.to_uppercase()), path, line));
+                                endpoints.push(endpoint(Some(&v.to_uppercase()), path, line));
                             }
                         }
                     } else {
@@ -249,6 +250,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(invalid_from_utf8)]
     fn parser_json_non_utf8_bytes_returns_typed_error() {
         let bad: &[u8] = b"\xFF\xFE\x00\x00";
         assert!(std::str::from_utf8(bad).is_err());

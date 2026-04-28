@@ -64,12 +64,7 @@ impl PluginRegistry {
     /// `path` is forwarded to the underlying plugin only for error
     /// reporting; the hash itself depends on `content` plus the
     /// language id.
-    pub fn structural_hash_of(
-        &self,
-        language: &str,
-        path: &str,
-        content: &str,
-    ) -> Option<String> {
+    pub fn structural_hash_of(&self, language: &str, path: &str, content: &str) -> Option<String> {
         let analysis = self.analyze_file(language, path, content).ok()?;
         Some(structural_hash(&analysis))
     }

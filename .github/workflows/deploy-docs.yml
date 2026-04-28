@@ -26,7 +26,6 @@ name: Deploy Docs
 
 on:
   push:
-    tags: ['v*']
     branches: [main, master]
     paths:
       - 'website/**'

@@ -143,8 +143,7 @@ fn invalid_yaml_returns_typed_error() {
     )
     .unwrap();
 
-    let err = ProjectSettings::load_or_default(dir.path())
-        .expect_err("malformed yaml must error");
+    let err = ProjectSettings::load_or_default(dir.path()).expect_err("malformed yaml must error");
     match err {
         Error::Yaml(_) => {}
         other => panic!("expected Error::Yaml, got: {other:?}"),
@@ -168,8 +167,7 @@ embeddings:
     )
     .unwrap();
 
-    let err = ProjectSettings::load_or_default(dir.path())
-        .expect_err("typo must error");
+    let err = ProjectSettings::load_or_default(dir.path()).expect_err("typo must error");
     match err {
         Error::Yaml(inner) => {
             let msg = inner.to_string();
@@ -191,8 +189,7 @@ mystery_section:
 "#,
     )
     .unwrap();
-    let err2 = ProjectSettings::load_or_default(dir.path())
-        .expect_err("top-level typo must error");
+    let err2 = ProjectSettings::load_or_default(dir.path()).expect_err("top-level typo must error");
     match err2 {
         Error::Yaml(inner) => {
             let msg = inner.to_string();

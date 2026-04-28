@@ -85,7 +85,14 @@ impl SearchEngine {
         // semantics, matching the TS port's `term1 | term2` extended search).
         let tokens: Vec<Pattern> = trimmed
             .split_whitespace()
-            .map(|t| Pattern::new(t, CaseMatching::Ignore, Normalization::Smart, AtomKind::Fuzzy))
+            .map(|t| {
+                Pattern::new(
+                    t,
+                    CaseMatching::Ignore,
+                    Normalization::Smart,
+                    AtomKind::Fuzzy,
+                )
+            })
             .collect();
         if tokens.is_empty() {
             return Vec::new();
