@@ -116,29 +116,26 @@ Set up and verify the `.understandignore` file before scanning. The
 natively, so this phase only needs to make sure a starter ignore file
 exists and that the user has had a chance to review it.
 
-1. Check if `$PROJECT_ROOT/.understandable/.understandignore` exists.
-2. **If it does NOT exist**, run `understandable init` to scaffold the
-   `.understandable/` directory and generate a starter ignore file
-   seeded with the project's `.gitignore` plus sensible defaults:
+1. Check if `$PROJECT_ROOT/.understandignore` exists.
+2. **If it does NOT exist**, run `understandable scan --gen-ignore` to
+   generate a starter ignore file seeded with the project's
+   `.gitignore` plus sensible defaults. The file is written to the
+   project root (`$PROJECT_ROOT/.understandignore`):
    ```bash
-   understandable init --path "$PROJECT_ROOT"
+   understandable scan --gen-ignore --path "$PROJECT_ROOT"
    ```
-   If the user wants to pre-seed extra exclusion patterns inline,
-   pass them as repeated `--ignore-path` flags:
-   ```bash
-   understandable init --path "$PROJECT_ROOT" \
-     --ignore-path "tests/" \
-     --ignore-path "fixtures/" \
-     --ignore-path "*.snap"
-   ```
+   If the user wants to pre-seed extra exclusion patterns, run
+   `understandable init --path "$PROJECT_ROOT" --ignore-path "tests/"`
+   first (the `--ignore-path` flag writes into `understandable.yaml`,
+   not `.understandignore`).
    Report to the user:
-   > Generated `.understandable/.understandignore` with suggested
+   > Generated `.understandignore` with suggested
    > exclusions based on your project structure. Please review it and
    > uncomment any patterns you'd like to exclude from analysis. When
    > ready, confirm to continue.
    - **Wait for user confirmation before proceeding.**
 3. **If it already exists**, report:
-   > Found `.understandable/.understandignore`. Review it if needed,
+   > Found `.understandignore`. Review it if needed,
    > then confirm to continue.
    - **Wait for user confirmation before proceeding.**
 4. After confirmation, proceed to Phase 1.
