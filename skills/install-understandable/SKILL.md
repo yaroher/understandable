@@ -1,5 +1,4 @@
 ---
-name: install-understandable
 description: Interactive `understandable` installer. Triggered when the user says "install understandable", "установи understandable", or supplies a git URL ("установи git@github.com:foo/bar.git"). Detects platform, picks the right install path, runs the setup wizard, and offers a first analyze.
 model: inherit
 ---

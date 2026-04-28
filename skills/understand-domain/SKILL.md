@@ -1,7 +1,6 @@
 ---
-name: understand-domain
 description: Extract business domain knowledge from a codebase and generate an interactive domain flow graph backed by the understandable CLI.
-argument-hint: [--full]
+argument-hint: "--full"
 ---
 
 # /understand-domain

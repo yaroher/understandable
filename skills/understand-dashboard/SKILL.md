@@ -1,7 +1,6 @@
 ---
-name: understand-dashboard
 description: Launch the embedded `understandable` dashboard to visualise a project's knowledge graph.
-argument-hint: [project-path]
+argument-hint: "project-path"
 ---
 
 # /understand-dashboard

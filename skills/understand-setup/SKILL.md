@@ -1,5 +1,4 @@
 ---
-name: understand-setup
 description: Interactive `understandable` setup wizard. Triggered when the user asks the IDE to "set up understandable", "configure understandable", or "настрой understandable" (optionally with a repository URL). Walks the user through preset selection, clones the repo when a URL is supplied, scaffolds `understandable.yaml`, and optionally runs the first analyze + embed pass.
 model: inherit
 ---
