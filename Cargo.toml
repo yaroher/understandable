@@ -39,7 +39,7 @@ serde        = { version = "1", features = ["derive"] }
 serde_json   = "1"
 serde_yaml_ng = "0.10"
 toml         = "0.8"
-thiserror    = "1"
+thiserror    = "2"
 anyhow       = "1"
 tracing      = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -52,6 +52,7 @@ clap         = { version = "4", features = ["derive", "env"] }
 indradb-lib  = "5.0.0"
 usearch      = "2.25.1"
 tar          = "0.4"
+# bincode 3.x is a full rewrite; staying on 1.x until migration planned
 bincode      = "1"
 uuid         = { version = "1", features = ["v5", "v4", "serde"] }
 rmp-serde    = "1"
@@ -66,8 +67,8 @@ petgraph     = "0.6"
 nucleo-matcher = "0.3"
 
 # http
-axum         = "0.7"
-tower-http   = { version = "0.5", features = ["fs", "cors", "trace"] }
+axum         = "0.8"
+tower-http   = { version = "0.6", features = ["fs", "cors", "trace"] }
 reqwest      = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 rust-embed   = { version = "8", features = ["debug-embed"] }
 

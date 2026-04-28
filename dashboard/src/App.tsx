@@ -85,7 +85,6 @@ function Dashboard() {
   const toggleBrowsePanel = useDashboardStore((s) => s.toggleBrowsePanel);
   const ensureNode = useDashboardStore((s) => s.ensureNode);
   const selectNode = useDashboardStore((s) => s.selectNode);
-  const setNeighbors = useDashboardStore((s) => s.setNeighbors);
   const loadEdgesForNode = useDashboardStore((s) => s.loadEdgesForNode);
 
   useEffect(() => {

@@ -21,7 +21,7 @@ pub fn assets_router() -> Router<Arc<AppState>> {
     // hard reload.
     Router::new()
         .route("/", get(serve_index))
-        .route("/assets/*path", get(serve_asset_relative))
+        .route("/assets/{*path}", get(serve_asset_relative))
         .fallback(serve_index)
 }
 
