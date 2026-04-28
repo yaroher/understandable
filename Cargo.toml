@@ -66,7 +66,7 @@ petgraph     = "0.6"
 nucleo-matcher = "0.3"
 
 # http
-axum         = "0.7"
+axum         = "0.8"
 tower-http   = { version = "0.5", features = ["fs", "cors", "trace"] }
 reqwest      = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 rust-embed   = { version = "8", features = ["debug-embed"] }
