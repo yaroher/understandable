@@ -1,7 +1,7 @@
 {
   "name": "understandable",
   "metadata": {
-    "description": "Rust-native codebase understanding — turso-backed knowledge graphs, guided tours, and deep-dive explanations."
+    "description": "Rust-native codebase understanding — knowledge graphs, guided tours, and deep-dive explanations."
   },
   "owner": {
     "name": "yaroher"
@@ -9,7 +9,11 @@
   "plugins": [
     {
       "name": "understandable",
-      "source": "."
+      "source": {
+        "source": "github",
+        "repo": "yaroher/understandable"
+      },
+      "description": "Rust-native codebase understanding — analyze, visualize, and explain any project"
     }
   ]
 }
