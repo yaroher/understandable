@@ -199,7 +199,21 @@ Batch the file list from Phase 1 into groups of **20-30 files each** (aim for ~2
 - Non-code files can be mixed with code files in the same batch if batch sizes are small
 - Each file's `fileCategory` from Phase 1 must be included in the batch file list
 
-For each batch, dispatch a subagent using the `file-analyzer` agent definition (at `agents/file-analyzer.md`). Run up to **5 subagents concurrently** using parallel dispatch. Append the following additional context:
+### Choosing the model for batch dispatch
+
+Before dispatching, decide which model the file-analyzer subagents should run on. Read `$PROJECT_ROOT/understandable.yaml::llm.model`:
+
+- **If the field is set** (e.g. `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-7`) → pass `model: <value>` as the explicit `subagent_type` model parameter when invoking the `Task` tool.
+- **If unset and there are >5 batches** → ask the user once:
+  > Phase 2 will dispatch N file-analyzer subagents. Pick a model:
+  > 1. `claude-haiku-4-5` — cheapest, ~$0.80/1M input. Best for small/medium codebases.
+  > 2. `claude-sonnet-4-6` — balanced, ~$3/1M input. Default choice.
+  > 3. `claude-opus-4-7` — highest quality, ~$15/1M input. Use for complex codebases.
+  > 4. `inherit` — use whatever the main session is using (current default).
+  Wait for confirmation, then persist the choice into `understandable.yaml::llm.model` so subsequent runs skip the prompt.
+- **If unset and ≤5 batches** → use `inherit` silently.
+
+For each batch, dispatch a subagent using the `file-analyzer` agent definition (at `agents/file-analyzer.md`). Run up to **5 subagents concurrently** using parallel dispatch. Pass the chosen `model` to each `Task` invocation. Append the following additional context:
 
 > **Additional context from main session:**
 >

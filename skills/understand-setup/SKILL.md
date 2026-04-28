@@ -120,7 +120,7 @@ defaults. Run `understandable init --help` to confirm exact flag names.
 | `embeddings.embed_on_analyze`              | `--embed-on-analyze {true,false}`                 | Auto-run `embed` after `analyze`.                                    |
 | `embeddings.concurrency`                   | `--embed-concurrency <N>`                         | Embedding batches in parallel. Default 2.                            |
 | `llm.provider`                             | `--llm-provider {anthropic,host}`                 | `host` = use the IDE's LLM via the markdown agents.                  |
-| `llm.model`                                | `--llm-model <id>`                                | Default `claude-opus-4-7`.                                           |
+| `llm.model`                                | `--llm-model <id>`                                | Anthropic API model (when `provider: anthropic`) AND model hint for `/understand` Phase-2 batch dispatch when `provider: host`. Default `claude-opus-4-7`. Pick `claude-haiku-4-5` for cheap multi-agent runs, `claude-sonnet-4-6` for balanced, `claude-opus-4-7` for max quality. |
 | `llm.max_files`                            | `--llm-max-files <N>`                             | Cap on files sent per `analyze --with-llm` run. Default 50.          |
 | `llm.temperature`                          | `--llm-temperature <f32>`                         | Default 0.2.                                                         |
 | `llm.run_on_analyze`                       | `--llm-run-on-analyze {true,false}`               | Auto-run `analyze --with-llm`.                                       |
