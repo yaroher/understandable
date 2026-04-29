@@ -2,7 +2,7 @@
 //! `git_commit_hash` against the current `HEAD` and report drift.
 //!
 //! Exit codes (stable contract — the post-commit / SessionStart hook in
-//! `hooks/hooks.json` branches on these):
+//! `plugin/hooks/hooks.json` branches on these):
 //!
 //! | Code | Meaning                                                     |
 //! |------|-------------------------------------------------------------|

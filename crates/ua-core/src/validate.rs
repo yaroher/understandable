@@ -1,7 +1,7 @@
 //! Deterministic graph validation.
 //!
 //! Mirrors the TS inline validator that ships with `@understand-anything/skill`
-//! (see `skills/understand/SKILL.md` lines 480-577). Output JSON shape:
+//! (see `plugin/skills/understand/SKILL.md` lines 480-577). Output JSON shape:
 //!
 //! ```json
 //! {
@@ -147,7 +147,7 @@ pub mod codes {
 }
 
 /// Node types treated as "file-level" for the layer-coverage warning. Mirrors
-/// the TS `fileLevelTypes` set in `skills/understand/SKILL.md:539`.
+/// the TS `fileLevelTypes` set in `plugin/skills/understand/SKILL.md:539`.
 fn is_file_level(node_type: NodeType) -> bool {
     matches!(
         node_type,

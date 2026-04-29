@@ -4,7 +4,7 @@
 //! Two output modes:
 //! - default: human-readable text (back-compat with the original behaviour).
 //! - `--json`: emit `{ valid, issues, warnings, stats }` to stdout, matching
-//!   the TS validator contract documented in `skills/understand/SKILL.md`
+//!   the TS validator contract documented in `plugin/skills/understand/SKILL.md`
 //!   lines 480-577.
 //!
 //! Exit codes:

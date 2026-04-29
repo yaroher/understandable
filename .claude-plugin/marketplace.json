@@ -9,10 +9,7 @@
   "plugins": [
     {
       "name": "understandable",
-      "source": {
-        "source": "github",
-        "repo": "yaroher/understandable"
-      },
+      "source": "./plugin",
       "description": "Rust-native codebase understanding — analyze, visualize, and explain any project"
     }
   ]

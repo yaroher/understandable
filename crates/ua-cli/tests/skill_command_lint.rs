@@ -70,7 +70,7 @@ const TOP_LEVEL_FLAGS: &[&str] = &[
 #[test]
 fn skill_command_lines_parse_with_clap() {
     let workspace_root = workspace_root();
-    let skills_dir = workspace_root.join("skills");
+    let skills_dir = workspace_root.join("plugin/skills");
     assert!(
         skills_dir.is_dir(),
         "expected skills dir at {}",
