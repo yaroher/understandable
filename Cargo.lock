@@ -3591,7 +3591,7 @@ checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
 
 [[package]]
 name = "ua-analyzer"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "ignore",
  "petgraph",
@@ -3606,7 +3606,7 @@ dependencies = [
 
 [[package]]
 name = "ua-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3616,7 +3616,7 @@ dependencies = [
 
 [[package]]
 name = "ua-extract"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "serde",
@@ -3682,7 +3682,7 @@ dependencies = [
 
 [[package]]
 name = "ua-llm"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "fastembed",
@@ -3700,7 +3700,7 @@ dependencies = [
 
 [[package]]
 name = "ua-persist"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bincode",
@@ -3724,7 +3724,7 @@ dependencies = [
 
 [[package]]
 name = "ua-search"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "nucleo-matcher",
  "serde",
@@ -3733,7 +3733,7 @@ dependencies = [
 
 [[package]]
 name = "ua-server"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3756,7 +3756,7 @@ dependencies = [
 
 [[package]]
 name = "understandable"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
