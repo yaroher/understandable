@@ -1408,11 +1408,14 @@ async fn run_scan_only(
 
     let lang_registry = LanguageRegistry::default_registry();
     let fw_registry = FrameworkRegistry::default_registry();
+    let plugin_registry = ua_extract::default_registry();
 
     let mut languages: BTreeSet<String> = BTreeSet::new();
     let mut scan_files: Vec<ScanFile> = Vec::with_capacity(files.len());
     let mut total_lines: usize = 0;
     let mut manifests: Vec<(PathBuf, String)> = Vec::new();
+    let mut import_map: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    let mut empty_extract_count: usize = 0;
     let manifest_basenames: BTreeSet<String> = fw_registry
         .all()
         .iter()
@@ -1422,7 +1425,8 @@ async fn run_scan_only(
 
     for file in &files {
         let rel = relative(file, project_path);
-        if let Some(cfg) = lang_registry.for_path(file) {
+        let lang = lang_registry.for_path(file);
+        if let Some(cfg) = &lang {
             languages.insert(cfg.id.clone());
         }
         // Cheap line-count probe — a file's length in newlines is a
@@ -1439,7 +1443,36 @@ async fn run_scan_only(
                 .map(|s| s.to_ascii_lowercase())
             {
                 if manifest_basenames.contains(&name) {
-                    manifests.push((file.clone(), content));
+                    manifests.push((file.clone(), content.clone()));
+                }
+            }
+            // Extract imports via tree-sitter so the file-analyzer
+            // batches receive a populated `importMap`. Empty extract
+            // results are tracked so the scan summary surfaces parser
+            // misses on Go/TS/etc.
+            if let Some(cfg) = lang {
+                match plugin_registry.analyze_file(&cfg.id, &rel, &content) {
+                    Ok(analysis) => {
+                        if analysis.imports.is_empty()
+                            && analysis.functions.is_empty()
+                            && analysis.classes.is_empty()
+                        {
+                            empty_extract_count += 1;
+                        }
+                        let sources: Vec<String> = analysis
+                            .imports
+                            .iter()
+                            .map(|imp| imp.source.clone())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                        if !sources.is_empty() {
+                            import_map.insert(rel.clone(), sources);
+                        }
+                    }
+                    Err(e) => {
+                        tracing::debug!(path = %rel, error = %e, "scan-only: extract failed");
+                        empty_extract_count += 1;
+                    }
                 }
             }
         }
@@ -1447,6 +1480,14 @@ async fn run_scan_only(
             path: rel,
             file_category: classify_file_category(file.to_string_lossy().as_ref()),
         });
+    }
+    if empty_extract_count > 0 {
+        tracing::warn!(
+            count = empty_extract_count,
+            total = files.len(),
+            "scan-only: tree-sitter returned empty structural data for {} file(s) — file-analyzer batches will fall back to LLM source reading for those",
+            empty_extract_count
+        );
     }
 
     let manifest_refs: Vec<(&Path, &str)> = manifests
@@ -1473,10 +1514,10 @@ async fn run_scan_only(
         filtered_by_ignore,
         estimated_complexity: estimate_complexity(total_lines).to_string(),
         files: scan_files,
-        // The CLI scanner doesn't compute import resolutions —
-        // that's the analyzer's job. Emit an empty map so the schema
-        // shape is stable; downstream consumers can skip the field.
-        import_map: BTreeMap::new(),
+        // Per-file `imports[].source` collected from tree-sitter
+        // extraction during the scan. Empty for languages without a
+        // tree-sitter plugin or when the parser returns no imports.
+        import_map,
         raw_description,
         readme_head,
         script_completed: true,
